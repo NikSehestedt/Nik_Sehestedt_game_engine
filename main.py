@@ -33,17 +33,14 @@ class Game:
     #keeps the data to be used
     def load_data(self):
         game_folder = path.dirname(__file__)
+        img_folder = path.join(game_folder, 'images')
+        self.player_img = pygame.image.load(path.join(img_folder, 'Mario.png')).convert_alpha()
+        self.deathblock_img = pygame.image.load(path.join(img_folder, 'Lava.png')).convert_alpha()
+        self.enemy_img = pygame.image.load(path.join(img_folder, 'Baldron.png')).convert_alpha()
+        #self.wall_img = pygame.image.load(path.join(img_folder, 'Johnson.png')).convert_alpha()
+        self.powerups_img = pygame.image.load(path.join(img_folder, 'Speedup.png')).convert_alpha()
+        self.coin_img = pygame.image.load(path.join(img_folder, 'Coin.png')).convert_alpha()
         self.map_data = []
-        # 'r'     open for reading (default)
-        # 'w'     open for writing, truncating the file first
-        # 'x'     open for exclusive creation, failing if the file already exists
-        # 'a'     open for writing, appending to the end of the file if it exists
-        # 'b'     binary mode
-        # 't'     text mode (default)
-        # '+'     open a disk file for updating (reading and writing)
-        # 'U'     universal newlines mode (deprecated)
-        # below opens file for reading in text mode
-        # with 
         '''
         The with statement is a context manager in Python. 
         It is used to ensure that a resource is properly closed or released 
@@ -62,6 +59,9 @@ class Game:
         #puts the walls to a variabale
         self.walls = pygame.sprite.Group()
         self.deathblocks = pygame.sprite.Group()
+        self.coins = pygame.sprite.Group()
+        self.power_ups = pygame.sprite.Group()
+        self.mobs = pygame.sprite.Group()
         #puts the player to a variable
         #self.p1 = Player(self, 10, 10)
         #adds the player to the sprite group
@@ -83,6 +83,13 @@ class Game:
                 #makes the deathblocks
                 if tile == 'd':
                     Deathblock(self, col, row)
+                if tile == 'C':
+                    Coin(self, col, row)
+                if tile == 'U':
+                    PowerUp(self, col, row)
+                if tile == 'M':
+                    Enemy(self, col, row)
+    
 
     #runs the game
     def run(self):
@@ -130,6 +137,7 @@ class Game:
         self.screen.fill(BGCOLOR)
         self.draw_grid()
         self.all_sprites.draw(self.screen)
+        self.draw_text(self.screen, str(self.p1.moneybag), 64, white, 1,1)
         pygame.display.flip()
 
     def events(self):
@@ -137,6 +145,8 @@ class Game:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.quit()
+
+        
 
 
     def show_start_screen(self):
