@@ -74,6 +74,11 @@ class Player(pg.sprite.Sprite):
         if self.vx != 0 and self.vy != 0:
             self.vx *= 0.7071
             self.vy *= 0.7071
+
+    # def interact(self):
+    #     keys = pg.key.get_pressed()
+    #     if keys[pg.K_KP_ENTER]:
+
     # bad move
     # def move(self, dx = 0, dy = 0):
     #     self.x += dx
@@ -150,10 +155,12 @@ class PowerUp(pg.sprite.Sprite):
         self.rect.y = y * tilesize
 
 class Enemy(pg.sprite.Sprite):
-    def __init__(self, game, x, y):
+    def __init__(self, game, x, y, countdown):
         self.groups = game.all_sprites, game.mobs
         pg.sprite.Sprite.__init__(self, self.groups)
         self.game = game
+        self.countdown = countdown
+        self.tick = self.game.clock.tick
         #self.image = pg.Surface((tilesize, tilesize))
         #self.image.fill(RED)
         self.image = game.enemy_img
@@ -191,13 +198,13 @@ class Enemy(pg.sprite.Sprite):
         self.x += self.vx * self.game.dt
         self.y += self.vy * self.game.dt
         if self.rect.x < self.game.p1.rect.x:
-            self.x += 1
+            self.vx = 200
         if self.rect.x > self.game.p1.rect.x:
-            self.x -= 1
+            self.vx = -200
         if self.rect.y < self.game.p1.rect.y:
-            self.y += 1
+            self.vy = 200
         if self.rect.y > self.game.p1.rect.y:
-            self.y -= 1
+            self.vy = -200
         self.rect.x = self.x
         self.collide_with_walls('x')
         self.rect.y = self.y
