@@ -59,6 +59,7 @@ class Game:
         game_folder = path.dirname(__file__)
         img_folder = path.join(game_folder, 'images')
         self.player_img = pygame.image.load(path.join(img_folder, 'Mario.png')).convert_alpha()
+        self.invcplayer_img = pygame.image.load(path.join(img_folder, 'GoldMario.png')).convert_alpha()
         self.deathblock_img = pygame.image.load(path.join(img_folder, 'Lava.png')).convert_alpha()
         self.enemy_img = pygame.image.load(path.join(img_folder, 'Baldron.png')).convert_alpha()
         #self.wall_img = pygame.image.load(path.join(img_folder, 'Johnson.png')).convert_alpha()

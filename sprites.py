@@ -1,7 +1,7 @@
 #This file was created by Nik Sehestedt
 import pygame as pg
 from settings import *
-
+from random import choice
 # write a player class
 class Player(pg.sprite.Sprite):
     def __init__(self, game, x, y):
@@ -10,6 +10,7 @@ class Player(pg.sprite.Sprite):
         self.game = game
         #self.groups = game.all_sprites
         #self.image = pg.Surface((tilesize, tilesize))
+        self.effect = ""
         self.image = game.player_img
         #self.image.fill(GREEN)
         self.rect = self.image.get_rect()
@@ -18,6 +19,7 @@ class Player(pg.sprite.Sprite):
         self.y = y * tilesize
         self.moneybag = 0
         self.speed = 300
+        
     def death(self):
         self.x = self.game.p1col*tilesize
         self.y = self.game.p1row*tilesize
@@ -42,6 +44,27 @@ class Player(pg.sprite.Sprite):
                     self.y = hits[0].rect.bottom
                 self.vy = 0
                 self.rect.y = self.y
+    def invccollisions(self, group, dir):
+        if self.effect == "invincibility":
+            if dir == "x":
+                hits = pg.sprite.spritecollide(self, group, False)
+                if hits:
+                    if self.vx > 0:
+                        self.x = hits[0].rect.left - self.rect.width
+                    if self.vx < 0:
+                        self.x = hits[0].rect.right
+                    self.vx = 0
+                    self.rect.x = self.x
+            if dir == "y":
+                hits = pg.sprite.spritecollide(self, group, False)
+                if hits:
+                    if self.vy > 0:
+                        self.y = hits[0].rect.top - self.rect.height
+                    if self.vy < 0:
+                        self.y = hits[0].rect.bottom
+                    self.vy = 0
+                    self.rect.y = self.y
+    
     #checks if the player collides with a sprite
     def collide_with_group(self, group, kill):
         hits = pg.sprite.spritecollide(self, group, kill)
@@ -53,11 +76,25 @@ class Player(pg.sprite.Sprite):
 
             #if its a powerup
             if str(hits[0].__class__.__name__) == "PowerUp":
-                self.speed += 100
+                self.effect = choice(Powerupeffects)
+                print (self.effect)
+                if self.effect == "speed":
+                    self.speed += 100
+                    self.image = self.game.player_img
+                if self.effect == "invincibility":
+                    self.image = self.game.invcplayer_img
             if str(hits[0].__class__.__name__) == "Deathblock":
-                self.death()
+                if self.effect != "invincibility":
+                    self.death()
+                if self.effect == "invincibility":
+                    self.rect.x = self.x
+                    self.invccollisions(self.game.deathblocks, 'x')
+                    self.rect.y = self.y
+                    self.invccollisions(self.game.deathblocks, 'y')
             if str(hits[0].__class__.__name__) == "Enemy":
-                self.death()
+                if self.effect != "invincibility":
+                    self.death()
+
 
                
     def get_keys(self):
