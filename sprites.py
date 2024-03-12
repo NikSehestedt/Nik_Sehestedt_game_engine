@@ -3,6 +3,27 @@ import pygame as pg
 from settings import *
 from random import choice
 # write a player class
+vec = pg.math.Vector2
+def collide_with_walls(sprite, group, dir):
+    if dir == "x":
+        hits = pg.sprite.spritecollide(sprite, group, False)
+        if hits:
+            if hits[0].rect.centerx > sprite.rect.centerx:
+                sprite.pos.x = hits[0].rect.left - sprite.rect.width / 2
+            if hits[0].rect.centerx < sprite.rect.centerx:
+                sprite.pos.x = hits[0].rect.right + sprite.rect.width / 2
+            sprite.vel.x = 0
+            sprite.rect.centerx = sprite.pos.x
+    if dir == "y":
+        hits = pg.sprite.spritecollide(sprite, group, False)
+        if hits:
+            if hits[0].rect.centery > sprite.rect.centery:
+                sprite.pos.y = hits[0].rect.top - sprite.rect.height / 2
+            if hits[0].rect.centery < sprite.rect.centery:
+                sprite.pos.y = hits[0].rect.bottom + sprite.rect.height / 2
+            sprite.vel.y = 0
+            sprite.rect.centery = sprite.pos.y
+
 class Player(pg.sprite.Sprite):
     def __init__(self, game, x, y):
         self.groups = game.all_sprites
@@ -19,12 +40,14 @@ class Player(pg.sprite.Sprite):
         self.y = y * tilesize
         self.moneybag = 0
         self.speed = 300
+        self.pos = vec(0,0)
         
     def death(self):
         self.x = self.game.p1col*tilesize
         self.y = self.game.p1row*tilesize
         self.speed = 300
         print("You Died")
+
     def collide_with_walls(self, dir):
         if dir == "x":
             hits = pg.sprite.spritecollide(self, self.game.walls, False)
@@ -35,7 +58,7 @@ class Player(pg.sprite.Sprite):
                     self.x = hits[0].rect.right
                 self.vx = 0
                 self.rect.x = self.x
-        if dir == "y":
+        if dir == 'y':
             hits = pg.sprite.spritecollide(self, self.game.walls, False)
             if hits:
                 if self.vy > 0:
@@ -44,6 +67,8 @@ class Player(pg.sprite.Sprite):
                     self.y = hits[0].rect.bottom
                 self.vy = 0
                 self.rect.y = self.y
+
+
     def invccollisions(self, group, dir):
         if self.effect == "invincibility":
             if dir == "x":
@@ -192,57 +217,27 @@ class PowerUp(pg.sprite.Sprite):
         self.rect.y = y * tilesize
 
 class Enemy(pg.sprite.Sprite):
-    def __init__(self, game, x, y, countdown):
+    def __init__(self, game, x, y):
         self.groups = game.all_sprites, game.mobs
         pg.sprite.Sprite.__init__(self, self.groups)
         self.game = game
-        self.countdown = countdown
-        self.tick = self.game.clock.tick
-        #self.image = pg.Surface((tilesize, tilesize))
-        #self.image.fill(RED)
-        self.image = game.enemy_img
+        self.image = self.game.enemy_img
         self.rect = self.image.get_rect()
-        self.x = x
-        self.y = y
-        self.vx, self.vy = 100, 100
-        self.x = x * tilesize
-        self.y = y * tilesize
-        self.speed = 1
-    def collide_with_walls(self, dir):
-        if dir == 'x':
-            # print('colliding on the x')
-            hits = pg.sprite.spritecollide(self, self.game.walls, False)
-            if hits:
-                self.vx *= -1
-                self.rect.x = self.x
-            hitsd = pg.sprite.spritecollide(self, self.game.deathblocks, False)
-            if hitsd:
-                self.vx *= -1
-                self.rect.x = self.x
-        if dir == 'y':
-            # print('colliding on the y')
-            hits = pg.sprite.spritecollide(self, self.game.walls, False)
-            if hits:
-                self.vy *= -1
-                self.rect.y = self.y
-            hitsd = pg.sprite.spritecollide(self, self.game.deathblocks, False)
-            if hitsd:
-                self.vy *= -1
-                self.rect.y = self.y
-                
+        self.pos = vec(x, y) * tilesize
+        self.vel = vec(0, 0)
+        self.acc = vec(0, 0)
+        self.rect.center = self.pos
+        self.rot = 0
+        self.speed = 150
+
     def update(self):
-        # self.rect.x += 1
-        self.x += self.vx * self.game.dt
-        self.y += self.vy * self.game.dt
-        if self.rect.x < self.game.p1.rect.x:
-            self.vx = 200
-        if self.rect.x > self.game.p1.rect.x:
-            self.vx = -200
-        if self.rect.y < self.game.p1.rect.y:
-            self.vy = 200
-        if self.rect.y > self.game.p1.rect.y:
-            self.vy = -200
-        self.rect.x = self.x
-        self.collide_with_walls('x')
-        self.rect.y = self.y
-        self.collide_with_walls('y')
+        self.rot = (self.game.p1.rect.center - self.pos).angle_to(vec(1, 0))
+        self.rect.center = self.pos
+        self.acc = vec(self.speed, 0).rotate(-self.rot)
+        self.acc += self.vel * -1
+        self.vel += self.acc * self.game.dt
+        self.pos += self.vel * self.game.dt + 0.5 * self.acc * self.game.dt ** 2
+        collide_with_walls(self, self.game.walls, 'x')
+        collide_with_walls(self, self.game.walls, 'y')
+        collide_with_walls(self, self.game.deathblocks, 'x')
+        collide_with_walls(self, self.game.deathblocks, 'y')

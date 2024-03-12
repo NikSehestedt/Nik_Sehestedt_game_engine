@@ -113,7 +113,7 @@ class Game:
                 if tile == 'U':
                     PowerUp(self, col, row)
                 if tile == 'M':
-                    Enemy(self, col, row, self.cooldown)
+                    Enemy(self, col, row)
     
 
     #runs the game
