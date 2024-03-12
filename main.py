@@ -1,5 +1,5 @@
 #this file was created by Nik Sehestedt
-#per 4 is the best
+#period 4 is the best
 
 #imports the libraries
 import pygame
@@ -59,6 +59,7 @@ class Game:
         game_folder = path.dirname(__file__)
         img_folder = path.join(game_folder, 'images')
         self.player_img = pygame.image.load(path.join(img_folder, 'Mario.png')).convert_alpha()
+        self.sword_img = pygame.image.load(path.join(img_folder, 'Sword.png')).convert_alpha()
         self.invcplayer_img = pygame.image.load(path.join(img_folder, 'GoldMario.png')).convert_alpha()
         self.deathblock_img = pygame.image.load(path.join(img_folder, 'Lava.png')).convert_alpha()
         self.enemy_img = pygame.image.load(path.join(img_folder, 'Baldron.png')).convert_alpha()
@@ -87,6 +88,7 @@ class Game:
         self.coins = pygame.sprite.Group()
         self.power_ups = pygame.sprite.Group()
         self.mobs = pygame.sprite.Group()
+        self.weapons = pygame.sprite.Group()
         #puts the player to a variable
         #self.p1 = Player(self, 10, 10)
         #adds the player to the sprite group
@@ -114,6 +116,8 @@ class Game:
                     PowerUp(self, col, row)
                 if tile == 'M':
                     Enemy(self, col, row)
+                if tile == 'W':
+                    Weapon(self.p1, self, col, row)
     
 
     #runs the game

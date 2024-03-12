@@ -137,6 +137,8 @@ class Player(pg.sprite.Sprite):
             self.vx *= 0.7071
             self.vy *= 0.7071
 
+
+
     # def interact(self):
     #     keys = pg.key.get_pressed()
     #     if keys[pg.K_KP_ENTER]:
@@ -158,6 +160,48 @@ class Player(pg.sprite.Sprite):
         self.collide_with_group(self.game.coins,True)
         self.collide_with_group(self.game.power_ups, True)
         self.collide_with_group(self.game.mobs, False)
+
+class Weapon(pg.sprite.Sprite):
+    def __init__(self, player, game,x,y):
+        self.groups = game.all_sprites, game.weapons
+        pg.sprite.Sprite.__init__(self, self.groups)
+        self.game = game
+        self.p1 = player
+        self.image = game.sword_img
+        self.rect = self.image.get_rect()
+        self.x = x
+        self.y = y
+        self.rect.x = self.x * tilesize
+        self.rect.y = self.y * tilesize
+        self.sheathed = True
+
+    def update(self):
+        keys = pg.key.get_pressed()
+        if self.sheathed == False:
+            if keys[pg.K_a] or keys[pg.K_LEFT]:
+                self.rect.x = self.p1.rect.x-32
+                self.rect.y = self.p1.rect.y
+            if keys[pg.K_d] or keys[pg.K_RIGHT]:
+                self.rect.x = self.p1.rect.x+32
+                self.rect.y = self.p1.rect.y
+            if keys[pg.K_w] or keys[pg.K_UP]:
+                self.rect.x = self.p1.rect.x
+                self.rect.y = self.p1.rect.y-32
+            if keys[pg.K_s] or keys[pg.K_DOWN]:
+                self.rect.x = self.p1.rect.x
+                self.rect.y = self.p1.rect.y+32
+        if self.sheathed == True:
+            if keys[pg.K_e]:
+                self.rect.x = self.p1.rect.x
+                self.rect.y = self.p1.rect.y-32
+                self.sheathed = False
+                print("I should be getting teleported")
+        #if self.sheathed == False:
+        #     if keys[pg.K_e]:
+                
+        #         self.sheathed = True
+        
+
 
 class Wall(pg.sprite.Sprite):
     def __init__(self, game, x, y):
