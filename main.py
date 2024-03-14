@@ -60,6 +60,9 @@ class Game:
         img_folder = path.join(game_folder, 'images')
         self.player_img = pygame.image.load(path.join(img_folder, 'Mario.png')).convert_alpha()
         self.sword_img = pygame.image.load(path.join(img_folder, 'Sword.png')).convert_alpha()
+        self.sworddown_img = pygame.image.load(path.join(img_folder, 'Sworddown.png')).convert_alpha()
+        self.swordleft_img = pygame.image.load(path.join(img_folder, 'Swordleft.png')).convert_alpha()
+        self.swordright_img = pygame.image.load(path.join(img_folder, 'Swordright.png')).convert_alpha()
         self.invcplayer_img = pygame.image.load(path.join(img_folder, 'GoldMario.png')).convert_alpha()
         self.deathblock_img = pygame.image.load(path.join(img_folder, 'Lava.png')).convert_alpha()
         self.enemy_img = pygame.image.load(path.join(img_folder, 'Baldron.png')).convert_alpha()
@@ -117,6 +120,8 @@ class Game:
                 if tile == 'M':
                     Enemy(self, col, row)
                 if tile == 'W':
+                    self.weaponcol = col
+                    self.weaponrow = row
                     Weapon(self.p1, self, col, row)
     
 

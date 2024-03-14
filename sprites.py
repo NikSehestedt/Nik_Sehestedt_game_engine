@@ -41,6 +41,9 @@ class Player(pg.sprite.Sprite):
         self.moneybag = 0
         self.speed = 300
         self.pos = vec(0,0)
+        self.sheathed = True
+        if self.sheathed == False:
+            self.speed = 200
         
     def death(self):
         self.x = self.game.p1col*tilesize
@@ -173,29 +176,42 @@ class Weapon(pg.sprite.Sprite):
         self.y = y
         self.rect.x = self.x * tilesize
         self.rect.y = self.y * tilesize
-        self.sheathed = True
 
+    def collide_with_group(self, group, kill):
+        hits = pg.sprite.spritecollide(self, group, kill)
+        if hits:
+            if str(hits[0].__class__.__name__) == "Enemy":
+               hits[0].hp -= 1
     def update(self):
         keys = pg.key.get_pressed()
-        if self.sheathed == False:
+        if self.p1.sheathed == False:
             if keys[pg.K_a] or keys[pg.K_LEFT]:
                 self.rect.x = self.p1.rect.x-32
                 self.rect.y = self.p1.rect.y
+                self.image = self.game.swordleft_img
             if keys[pg.K_d] or keys[pg.K_RIGHT]:
                 self.rect.x = self.p1.rect.x+32
                 self.rect.y = self.p1.rect.y
+                self.image = self.game.swordright_img
             if keys[pg.K_w] or keys[pg.K_UP]:
                 self.rect.x = self.p1.rect.x
                 self.rect.y = self.p1.rect.y-32
+                self.image = self.game.sword_img
             if keys[pg.K_s] or keys[pg.K_DOWN]:
                 self.rect.x = self.p1.rect.x
                 self.rect.y = self.p1.rect.y+32
-        if self.sheathed == True:
+                self.image = self.game.sworddown_img
+            if keys[pg.K_e]:
+                self.rect.x = self.game.weaponcol
+                self.rect.y = self.game.weaponrow
+                self.p1.sheathed = True
+        if self.p1.sheathed == True:
             if keys[pg.K_e]:
                 self.rect.x = self.p1.rect.x
                 self.rect.y = self.p1.rect.y-32
-                self.sheathed = False
+                self.p1.sheathed = False
                 print("I should be getting teleported")
+        self.collide_with_group(self.game.mobs, False)
         #if self.sheathed == False:
         #     if keys[pg.K_e]:
                 
@@ -273,6 +289,12 @@ class Enemy(pg.sprite.Sprite):
         self.rect.center = self.pos
         self.rot = 0
         self.speed = 150
+        self.hp = 3
+    # def collide_with_group(self, group, kill):
+    #     hits = pg.sprite.spritecollide(self, group, kill)
+    #     if str(hits[0].__class__.__name__) == "Weapon":
+    #         self.hp -= 1
+    #         print("The enemy took damage")
 
     def update(self):
         self.rot = (self.game.p1.rect.center - self.pos).angle_to(vec(1, 0))
@@ -285,3 +307,6 @@ class Enemy(pg.sprite.Sprite):
         collide_with_walls(self, self.game.walls, 'y')
         collide_with_walls(self, self.game.deathblocks, 'x')
         collide_with_walls(self, self.game.deathblocks, 'y')
+        #self.collide_with_group(self.game.weapons, False)
+        if self.hp < 1:
+            self.kill()
