@@ -9,29 +9,8 @@ import sys
 from random import randint
 from os import path
 from math import floor
+from utils import *
 
-# this 'cooldown' class is designed to help us control time
-class Cooldown:
-    # sets all properties to zero when instantiated...
-    def __init__(self):
-        self.current_time = 0
-        self.event_time = 0
-        self.delta = 0
-        # ticking ensures the timer is counting...
-    # must use ticking to count up or down
-    def ticking(self):
-        self.current_time = floor((pg.time.get_ticks())/1000)
-        self.delta = self.current_time - self.event_time
-    # resets event time to zero - cooldown reset
-    def countdown(self, x):
-        x = x - self.delta
-        if x != None:
-            return x
-    def event_reset(self):
-        self.event_time = floor((pg.time.get_ticks())/1000)
-    # sets current time
-    def timer(self):
-        self.current_time = floor((pg.time.get_ticks())/1000)
 
 
 #Creates a game and a screen to put the game on
@@ -50,7 +29,6 @@ class Game:
         self.clock = pygame.time.Clock()
         pygame.key.set_repeat(500,100)
         self.running = True
-        self.cooldown = Cooldown()
         #loads the data
         self.load_data()
 
@@ -83,6 +61,7 @@ class Game:
 
     #puts our sprites in Game
     def new(self):
+        self.cooldown = Timer(self)
         #puts the sprite group to a variable
         self.all_sprites = pygame.sprite.Group()
         #puts the walls to a variabale
@@ -149,6 +128,7 @@ class Game:
     #updates the sprites on the screen
     def update(self):
         self.all_sprites.update()
+        self.cooldown.ticking()
         #self.p1.update()
         #movementcooldown = self.cooldown.countdown(0.1)
         #if movementcooldown == 0:

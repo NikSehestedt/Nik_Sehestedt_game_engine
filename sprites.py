@@ -2,6 +2,8 @@
 import pygame as pg
 from settings import *
 from random import choice
+from random import randint
+from utils import *
 # write a player class
 vec = pg.math.Vector2
 def collide_with_walls(sprite, group, dir):
@@ -42,9 +44,9 @@ class Player(pg.sprite.Sprite):
         self.speed = 300
         self.pos = vec(0,0)
         self.sheathed = True
-        if self.sheathed == False:
-            self.speed = 200
-        
+        self.cooling = False
+        self.damagecooling = False
+        self.health = 100
     def death(self):
         self.x = self.game.p1col*tilesize
         self.y = self.game.p1row*tilesize
@@ -100,20 +102,12 @@ class Player(pg.sprite.Sprite):
             #if its a coin
             if str(hits[0].__class__.__name__) == "Coin":
                 self.moneybag += 1
-               # if self.moneybag == 25:
-
-            #if its a powerup
-            if str(hits[0].__class__.__name__) == "PowerUp":
-                self.effect = choice(Powerupeffects)
-                print (self.effect)
-                if self.effect == "speed":
-                    self.speed += 100
-                    self.image = self.game.player_img
-                if self.effect == "invincibility":
-                    self.image = self.game.invcplayer_img
+               # if self.moneybag == 25
             if str(hits[0].__class__.__name__) == "Deathblock":
                 if self.effect != "invincibility":
-                    self.death()
+                    self.health -= 3
+                    self.damagecooling = True
+                    self.game.cooldown.cd = 0.3
                 if self.effect == "invincibility":
                     self.rect.x = self.x
                     self.invccollisions(self.game.deathblocks, 'x')
@@ -121,7 +115,21 @@ class Player(pg.sprite.Sprite):
                     self.invccollisions(self.game.deathblocks, 'y')
             if str(hits[0].__class__.__name__) == "Enemy":
                 if self.effect != "invincibility":
-                    self.death()
+                    self.health-=randint(10,25)
+                    self.damagecooling = True
+                    self.game.cooldown.cd = 0.4
+            #if its a powerup
+            if str(hits[0].__class__.__name__) == "PowerUp":
+                self.effect = choice(Powerupeffects)
+                print (self.effect)
+                self.game.cooldown.cd = 5
+                self.cooling = True
+                if self.effect == "speed":
+                    self.speed += 100
+                    
+                    self.image = self.game.player_img
+                if self.effect == "invincibility":
+                    self.image = self.game.invcplayer_img
 
 
                
@@ -159,11 +167,19 @@ class Player(pg.sprite.Sprite):
         self.collide_with_walls('x')
         self.rect.y = self.y
         self.collide_with_walls('y')
-        self.collide_with_group(self.game.deathblocks, False)
         self.collide_with_group(self.game.coins,True)
-        self.collide_with_group(self.game.power_ups, True)
-        self.collide_with_group(self.game.mobs, False)
-
+        if self.game.cooldown.cd < 1:
+            self.cooling = False
+            self.speed = 300
+            self.image = self.game.player_img
+            self.effect = ""
+        if not self.cooling:
+            self.collide_with_group(self.game.power_ups, True)
+        if not self.damagecooling:
+            self.collide_with_group(self.game.deathblocks, False)
+            self.collide_with_group(self.game.mobs, False)
+        if self.health <= 0:
+            self.death()
 class Weapon(pg.sprite.Sprite):
     def __init__(self, player, game,x,y):
         self.groups = game.all_sprites, game.weapons
@@ -176,12 +192,15 @@ class Weapon(pg.sprite.Sprite):
         self.y = y
         self.rect.x = self.x * tilesize
         self.rect.y = self.y * tilesize
+        #self.cooling = False
 
-    def collide_with_group(self, group, kill):
-        hits = pg.sprite.spritecollide(self, group, kill)
-        if hits:
-            if str(hits[0].__class__.__name__) == "Enemy":
-               hits[0].hp -= 1
+    # def collide_with_group(self, group, kill):
+    #     hits = pg.sprite.spritecollide(self, group, kill)
+    #     if hits:
+    #         if str(hits[0].__class__.__name__) == "Enemy":
+    #            hits[0].hp -= 1
+    #            self.game.cooldown.cd = 1
+    #            self.cooling = True
     def update(self):
         keys = pg.key.get_pressed()
         if self.p1.sheathed == False:
@@ -211,7 +230,11 @@ class Weapon(pg.sprite.Sprite):
                 self.rect.y = self.p1.rect.y-32
                 self.p1.sheathed = False
                 print("I should be getting teleported")
-        self.collide_with_group(self.game.mobs, False)
+        
+        #if self.game.cooldown.cd <= 0:
+        #    self.cooling = False
+        #if not self.cooling:
+        #    self.collide_with_group(self.game.mobs, False)
         #if self.sheathed == False:
         #     if keys[pg.K_e]:
                 
@@ -280,6 +303,7 @@ class Enemy(pg.sprite.Sprite):
     def __init__(self, game, x, y):
         self.groups = game.all_sprites, game.mobs
         pg.sprite.Sprite.__init__(self, self.groups)
+        self.damageicon = False
         self.game = game
         self.image = self.game.enemy_img
         self.rect = self.image.get_rect()
@@ -290,11 +314,18 @@ class Enemy(pg.sprite.Sprite):
         self.rot = 0
         self.speed = 150
         self.hp = 3
-    # def collide_with_group(self, group, kill):
-    #     hits = pg.sprite.spritecollide(self, group, kill)
-    #     if str(hits[0].__class__.__name__) == "Weapon":
-    #         self.hp -= 1
-    #         print("The enemy took damage")
+        self.cooling = False
+        self.imagecooling = 0
+    def collide_with_group(self, group, kill):
+        hits = pg.sprite.spritecollide(self, group, kill)
+        if hits:
+            if str(hits[0].__class__.__name__) == "Weapon":
+                self.hp -= 1
+                self.cooling = True
+                self.game.cooldown.cd = 3
+                self.damageicon = True
+                self.imagecooling = self.game.cooldown.cd = 0.1
+                print("The enemy took damage")
 
     def update(self):
         self.rot = (self.game.p1.rect.center - self.pos).angle_to(vec(1, 0))
@@ -308,5 +339,17 @@ class Enemy(pg.sprite.Sprite):
         collide_with_walls(self, self.game.deathblocks, 'x')
         collide_with_walls(self, self.game.deathblocks, 'y')
         #self.collide_with_group(self.game.weapons, False)
-        if self.hp < 1:
+        if self.game.cooldown.cd <= 0:
+            self.cooling = False
+        if self.imagecooling <= 0:
+            self.damageicon = False
+        if self.damageicon:
+            self.image = pg.Surface((tilesize, tilesize))
+            self.image.fill(white)
+        if not self.damageicon:
+            self.image = self.game.enemy_img
+        
+        if not self.cooling:
+            self.collide_with_group(self.game.weapons, False)
+        if self.hp <= 0:
             self.kill()
