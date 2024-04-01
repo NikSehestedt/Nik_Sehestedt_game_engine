@@ -38,6 +38,7 @@ class Player(pg.sprite.Sprite):
         #self.image.fill(GREEN)
         self.rect = self.image.get_rect()
         self.vx, self.vy = 0, 0
+        self.mx, self.my =0,0
         self.x = x * tilesize
         self.y = y * tilesize
         self.moneybag = 0
@@ -47,6 +48,8 @@ class Player(pg.sprite.Sprite):
         self.cooling = False
         self.damagecooling = False
         self.health = 100
+        self.movebox = (396, 628, 268, 500)
+        self.map_pos = (0,0)
     def death(self):
         self.x = self.game.p1col*tilesize
         self.y = self.game.p1row*tilesize
@@ -134,6 +137,7 @@ class Player(pg.sprite.Sprite):
 
                
     def get_keys(self):
+        self.mapx,self.mapy = self.map_pos
         self.vx, self.vy = 0, 0
         keys = pg.key.get_pressed()
         if keys[pg.K_a] or keys[pg.K_LEFT]:
@@ -144,10 +148,26 @@ class Player(pg.sprite.Sprite):
             self.vy = -self.speed
         if keys[pg.K_s] or keys[pg.K_DOWN]:
             self.vy = self.speed
+
+        if self.rect.x <= self.movebox[0]:
+            self.vx = self.speed
+            self.mx = self.speed
+        elif self.rect.x >= self.movebox[1]:
+            self.vx = -self.speed
+            self.mx = -self.speed
+        if self.rect.y <= self.movebox[2]:
+            self.vy = self.speed
+            self.my = self.speed
+        elif self.rect.y >= self.movebox[3]:
+            self.vy = -self.speed
+            self.my = -self.speed
         if self.vx != 0 and self.vy != 0:
             self.vx *= 0.7071
             self.vy *= 0.7071
-
+        if self.mx != 0 and self.my != 0:
+            self.mx *= 0.7071
+            self.my *= 0.7071
+        
 
 
     # def interact(self):
@@ -160,9 +180,13 @@ class Player(pg.sprite.Sprite):
     #     self.y += dy
     #better move
     def update(self):
+        
         self.get_keys()
         self.x += self.vx * self.game.dt
         self.y += self.vy * self.game.dt
+        self.mapx += self.mx *self.game.dt
+        self.mapy += self.my *self.game.dt
+        self.map_pos = (self.mapx,self.mapy)
         self.rect.x = self.x
         self.collide_with_walls('x')
         self.rect.y = self.y
@@ -180,6 +204,10 @@ class Player(pg.sprite.Sprite):
             self.collide_with_group(self.game.mobs, False)
         if self.health <= 0:
             self.death()
+       
+
+   # def render(self,display):
+    #    display.blit(self.image,(self.rect.x,self.rect.y))
 class Weapon(pg.sprite.Sprite):
     def __init__(self, player, game,x,y):
         self.groups = game.all_sprites, game.weapons

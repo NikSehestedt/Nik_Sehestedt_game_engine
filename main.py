@@ -76,6 +76,7 @@ class Game:
         #adds the player to the sprite group
         #self.all_sprites.add(self.p1)
         #runs through the map and creates the walls
+        self.map = pygame.Surface((len(self.map_data[0])*32,len(self.map_data)*32))
         for row, tiles in enumerate(self.map_data):
             print(row)
             for col, tile in enumerate(tiles):
@@ -155,8 +156,10 @@ class Game:
     def draw(self):
         self.screen.fill(BGCOLOR)
         self.draw_grid()
-        self.all_sprites.draw(self.screen)
+        self.all_sprites.draw(self.map)
         self.draw_text(self.screen, str(self.p1.moneybag), 64, white, 1,1)
+        self.screen.blit(self.map,self.p1.map_pos)
+        #self.p1.render(self.screen)
         pygame.display.flip()
 
     def events(self):
