@@ -28,7 +28,7 @@ def collide_with_walls(sprite, group, dir):
 
 class Player(pg.sprite.Sprite):
     def __init__(self, game, x, y):
-        self.groups = game.all_sprites
+        self.groups = game.all_sprites, game.players
         pg.sprite.Sprite.__init__(self, self.groups)
         self.game = game
         #self.groups = game.all_sprites
@@ -48,14 +48,63 @@ class Player(pg.sprite.Sprite):
         self.cooling = False
         self.damagecooling = False
         self.health = 100
-        self.movebox = (396, 628, 268, 500)
+        self.movebox = [506, 522, 344, 360]
         self.map_pos = (0,0)
     def death(self):
         self.x = self.game.p1col*tilesize
         self.y = self.game.p1row*tilesize
         self.speed = 300
         print("You Died")
-
+    def movebox_collisions(self):
+        self.mx, self.my = 0,0
+        if self.mx != 0 and self.my != 0:
+            self.mx *= 0.7071
+            self.my *= 0.7071
+        if self.rect.x <= self.movebox[0]:
+            if self.vx < 0:
+                    self.x = self.movebox[0]
+            self.mx = self.speed
+            if self.goingright == True:
+                self.vx = self.mx
+            else:
+                self.vx = 0
+            self.rect.x = self.x
+            self.movebox[0] += -self.mx * self.game.dt
+            self.movebox[1] += -self.mx * self.game.dt
+        if self.rect.x >= self.movebox[1]:
+            if self.vx > 0:
+                    self.x = self.movebox[1]
+            self.mx = -self.speed
+            if self.goingleft == True:
+                self.vx = self.mx
+            else:
+                self.vx = 0
+            self.rect.x = self.x
+            self.movebox[0] += -self.mx * self.game.dt
+            self.movebox[1] += -self.mx * self.game.dt
+        if self.rect.y <= self.movebox[2]:
+            if self.vy < 0:
+                    self.y = self.movebox[2]
+            self.my = self.speed
+            if self.goingup == True:
+                self.vy = self.my
+            else:
+                self.vy = 0
+            self.rect.y = self.y
+            self.movebox[2] += -self.my * self.game.dt
+            self.movebox[3] += -self.my * self.game.dt
+        if self.rect.y >= self.movebox[3]:
+            if self.vy > 0:
+                    self.y = self.movebox[3]
+            self.my = -self.speed
+            if self.goingdown == True:
+                self.vy = self.my
+            else:
+                self.vy = 0
+            self.rect.y = self.y
+            self.movebox[2] += -self.my * self.game.dt
+            self.movebox[3] += -self.my * self.game.dt
+        
     def collide_with_walls(self, dir):
         if dir == "x":
             hits = pg.sprite.spritecollide(self, self.game.walls, False)
@@ -142,31 +191,50 @@ class Player(pg.sprite.Sprite):
         keys = pg.key.get_pressed()
         if keys[pg.K_a] or keys[pg.K_LEFT]:
             self.vx = -self.speed
+            self.goingleft = True
         if keys[pg.K_d] or keys[pg.K_RIGHT]:
             self.vx = self.speed
+            self.goingright = True
         if keys[pg.K_w] or keys[pg.K_UP]:
             self.vy = -self.speed
+            self.goingup = True
         if keys[pg.K_s] or keys[pg.K_DOWN]:
             self.vy = self.speed
-
-        if self.rect.x <= self.movebox[0]:
-            self.vx = self.speed
-            self.mx = self.speed
-        elif self.rect.x >= self.movebox[1]:
-            self.vx = -self.speed
-            self.mx = -self.speed
-        if self.rect.y <= self.movebox[2]:
-            self.vy = self.speed
-            self.my = self.speed
-        elif self.rect.y >= self.movebox[3]:
-            self.vy = -self.speed
-            self.my = -self.speed
+            self.goingdown = True
         if self.vx != 0 and self.vy != 0:
             self.vx *= 0.7071
             self.vy *= 0.7071
-        if self.mx != 0 and self.my != 0:
-            self.mx *= 0.7071
-            self.my *= 0.7071
+        else:
+            self.goingleft = False
+            self.goingright = False
+            self.goingup = False
+            self.goingdown = False
+        
+        if self.sheathed == True:
+            if keys[pg.K_e]:
+                self.weapon = Weapon(self.game, self.rect.x, self.rect.y - 32)
+                self.sheathed = False
+        # if self.rect.x <= self.movebox[0]:
+        #     self.vx = self.speed
+        #     self.mx = self.speed
+        #     self.movebox[0] += -self.mx * self.game.dt
+        #     self.movebox[1] += -self.mx * self.game.dt
+        # elif self.rect.x >= self.movebox[1]:
+        #     self.vx = -self.speed
+        #     self.mx = -self.speed
+        #     self.movebox[0] += -self.mx * self.game.dt
+        #     self.movebox[1] += -self.mx * self.game.dt
+        # if self.rect.y <= self.movebox[2]:
+        #     self.vy = self.speed
+        #     self.my = self.speed
+        #     self.movebox[2] += -self.my * self.game.dt
+        #     self.movebox[3] += -self.my * self.game.dt
+        # elif self.rect.y >= self.movebox[3]:
+        #     self.vy = -self.speed
+        #     self.my = -self.speed
+        #     self.movebox[2] += -self.my * self.game.dt
+        #     self.movebox[3] += -self.my * self.game.dt
+        
         
 
 
@@ -184,14 +252,15 @@ class Player(pg.sprite.Sprite):
         self.get_keys()
         self.x += self.vx * self.game.dt
         self.y += self.vy * self.game.dt
-        self.mapx += self.mx *self.game.dt
-        self.mapy += self.my *self.game.dt
-        self.map_pos = (self.mapx,self.mapy)
         self.rect.x = self.x
         self.collide_with_walls('x')
         self.rect.y = self.y
         self.collide_with_walls('y')
         self.collide_with_group(self.game.coins,True)
+        self.movebox_collisions()
+        self.mapx += self.mx *self.game.dt
+        self.mapy += self.my *self.game.dt
+        self.map_pos = (self.mapx,self.mapy)
         if self.game.cooldown.cd < 1:
             self.cooling = False
             self.speed = 300
@@ -209,11 +278,10 @@ class Player(pg.sprite.Sprite):
    # def render(self,display):
     #    display.blit(self.image,(self.rect.x,self.rect.y))
 class Weapon(pg.sprite.Sprite):
-    def __init__(self, player, game,x,y):
+    def __init__(self,game,x,y):
         self.groups = game.all_sprites, game.weapons
         pg.sprite.Sprite.__init__(self, self.groups)
         self.game = game
-        self.p1 = player
         self.image = game.sword_img
         self.rect = self.image.get_rect()
         self.x = x
@@ -231,33 +299,27 @@ class Weapon(pg.sprite.Sprite):
     #            self.cooling = True
     def update(self):
         keys = pg.key.get_pressed()
-        if self.p1.sheathed == False:
+        if self.game.p1.sheathed == False:
             if keys[pg.K_a] or keys[pg.K_LEFT]:
-                self.rect.x = self.p1.rect.x-32
-                self.rect.y = self.p1.rect.y
+                self.rect.x = self.game.p1.rect.x-32
+                self.rect.y = self.game.p1.rect.y
                 self.image = self.game.swordleft_img
             if keys[pg.K_d] or keys[pg.K_RIGHT]:
-                self.rect.x = self.p1.rect.x+32
-                self.rect.y = self.p1.rect.y
+                self.rect.x = self.game.p1.rect.x+32
+                self.rect.y = self.game.p1.rect.y
                 self.image = self.game.swordright_img
             if keys[pg.K_w] or keys[pg.K_UP]:
-                self.rect.x = self.p1.rect.x
-                self.rect.y = self.p1.rect.y-32
+                self.rect.x = self.game.p1.rect.x
+                self.rect.y = self.game.p1.rect.y-32
                 self.image = self.game.sword_img
             if keys[pg.K_s] or keys[pg.K_DOWN]:
-                self.rect.x = self.p1.rect.x
-                self.rect.y = self.p1.rect.y+32
+                self.rect.x = self.game.p1.rect.x
+                self.rect.y = self.game.p1.rect.y+32
                 self.image = self.game.sworddown_img
             if keys[pg.K_e]:
-                self.rect.x = self.game.weaponcol
-                self.rect.y = self.game.weaponrow
-                self.p1.sheathed = True
-        if self.p1.sheathed == True:
-            if keys[pg.K_e]:
-                self.rect.x = self.p1.rect.x
-                self.rect.y = self.p1.rect.y-32
-                self.p1.sheathed = False
-                print("I should be getting teleported")
+                self.kill()
+                self.game.p1.sheathed = True
+                
         
         #if self.game.cooldown.cd <= 0:
         #    self.cooling = False
@@ -272,7 +334,7 @@ class Weapon(pg.sprite.Sprite):
 
 class Wall(pg.sprite.Sprite):
     def __init__(self, game, x, y):
-        self.groups = game.all_sprites, game.walls
+        self.groups = game.all_sprites, game.walls, game.np_sprites
         pg.sprite.Sprite.__init__(self, self.groups)
         self.game = game
         #self.groups = game.all_sprites
@@ -287,7 +349,7 @@ class Wall(pg.sprite.Sprite):
 
 class Deathblock(pg.sprite.Sprite):
     def __init__(self, game, x,y):
-        self.groups = game.all_sprites, game.deathblocks
+        self.groups = game.all_sprites, game.deathblocks, game.np_sprites
         pg.sprite.Sprite.__init__(self, self.groups)
         self.game = game
         #self.image = pg.Surface((tilesize, tilesize))
@@ -301,7 +363,7 @@ class Deathblock(pg.sprite.Sprite):
 
 class Coin(pg.sprite.Sprite):
     def __init__(self, game, x, y):
-        self.groups = game.all_sprites, game.coins
+        self.groups = game.all_sprites, game.coins, game.np_sprites
         pg.sprite.Sprite.__init__(self, self.groups)
         self.game = game
         #self.image = pg.Surface((tilesize, tilesize))
@@ -315,7 +377,7 @@ class Coin(pg.sprite.Sprite):
 
 class PowerUp(pg.sprite.Sprite):
     def __init__(self, game, x, y):
-        self.groups = game.all_sprites, game.power_ups
+        self.groups = game.all_sprites, game.power_ups, game.np_sprites
         pg.sprite.Sprite.__init__(self, self.groups)
         self.game = game
         #self.image = pg.Surface((tilesize, tilesize))
@@ -329,7 +391,7 @@ class PowerUp(pg.sprite.Sprite):
 
 class Enemy(pg.sprite.Sprite):
     def __init__(self, game, x, y):
-        self.groups = game.all_sprites, game.mobs
+        self.groups = game.all_sprites, game.mobs, game.np_sprites
         pg.sprite.Sprite.__init__(self, self.groups)
         self.damageicon = False
         self.game = game

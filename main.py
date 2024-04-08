@@ -64,7 +64,9 @@ class Game:
         self.cooldown = Timer(self)
         #puts the sprite group to a variable
         self.all_sprites = pygame.sprite.Group()
+        self.np_sprites = pygame.sprite.Group()
         #puts the walls to a variabale
+        self.players = pygame.sprite.Group()
         self.walls = pygame.sprite.Group()
         self.deathblocks = pygame.sprite.Group()
         self.coins = pygame.sprite.Group()
@@ -99,10 +101,7 @@ class Game:
                     PowerUp(self, col, row)
                 if tile == 'M':
                     Enemy(self, col, row)
-                if tile == 'W':
-                    self.weaponcol = col
-                    self.weaponrow = row
-                    Weapon(self.p1, self, col, row)
+
     
 
     #runs the game
@@ -156,9 +155,11 @@ class Game:
     def draw(self):
         self.screen.fill(BGCOLOR)
         self.draw_grid()
-        self.all_sprites.draw(self.map)
+        
         self.draw_text(self.screen, str(self.p1.moneybag), 64, white, 1,1)
         self.screen.blit(self.map,self.p1.map_pos)
+        self.map.fill(BGCOLOR)
+        self.all_sprites.draw(self.map)
         #self.p1.render(self.screen)
         pygame.display.flip()
 
