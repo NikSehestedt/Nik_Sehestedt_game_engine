@@ -1,3 +1,4 @@
+#base stuff
 width, height = 1024, 768
 tilesize = 32
 PLAYER_SPEED = 300

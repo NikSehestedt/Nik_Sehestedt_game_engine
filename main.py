@@ -36,6 +36,7 @@ class Game:
     def load_data(self):
         game_folder = path.dirname(__file__)
         img_folder = path.join(game_folder, 'images')
+        #all of the textures are set here
         self.player_img = pygame.image.load(path.join(img_folder, 'Mario.png')).convert_alpha()
         self.sword_img = pygame.image.load(path.join(img_folder, 'Sword.png')).convert_alpha()
         self.sworddown_img = pygame.image.load(path.join(img_folder, 'Sworddown.png')).convert_alpha()
@@ -47,6 +48,7 @@ class Game:
         #self.wall_img = pygame.image.load(path.join(img_folder, 'Johnson.png')).convert_alpha()
         self.powerups_img = pygame.image.load(path.join(img_folder, 'Speedup.png')).convert_alpha()
         self.coin_img = pygame.image.load(path.join(img_folder, 'Coin.png')).convert_alpha()
+        self.safe_img = pygame.image.load(path.join(img_folder, 'Safezone.png')).convert_alpha()
         self.map_data = []
         '''
         The with statement is a context manager in Python. 
@@ -62,10 +64,9 @@ class Game:
     #puts our sprites in Game
     def new(self):
         self.cooldown = Timer(self)
-        #puts the sprite group to a variable
+        #puts the sprite groups to variables
         self.all_sprites = pygame.sprite.Group()
         self.np_sprites = pygame.sprite.Group()
-        #puts the walls to a variabale
         self.players = pygame.sprite.Group()
         self.walls = pygame.sprite.Group()
         self.deathblocks = pygame.sprite.Group()
@@ -73,11 +74,8 @@ class Game:
         self.power_ups = pygame.sprite.Group()
         self.mobs = pygame.sprite.Group()
         self.weapons = pygame.sprite.Group()
-        #puts the player to a variable
-        #self.p1 = Player(self, 10, 10)
-        #adds the player to the sprite group
-        #self.all_sprites.add(self.p1)
-        #runs through the map and creates the walls
+        self.safewalls = pygame.sprite.Group()
+        #makes the map
         self.map = pygame.Surface((len(self.map_data[0])*32,len(self.map_data)*32))
         for row, tiles in enumerate(self.map_data):
             print(row)
@@ -95,12 +93,18 @@ class Game:
                 #makes the deathblocks
                 if tile == 'd':
                     Deathblock(self, col, row)
+                #makes coins
                 if tile == 'C':
                     Coin(self, col, row)
-                if tile == 'U':
+                #makes powerups
+                if tile == 'P':
                     PowerUp(self, col, row)
+                #makes enemies
                 if tile == 'M':
                     Enemy(self, col, row)
+                #makes safespaces
+                if tile == 'S':
+                    Safespace(self, col, row)
 
     
 
@@ -134,14 +138,6 @@ class Game:
         #if movementcooldown == 0:
             #self.mobs.update()
         
-#creates tiles on the screen
-    def draw_grid(self):
-        for x in range(0, width, tilesize):
-            #draws horizontal lines
-            pygame.draw.line(self.screen, LIGHTGREY,(x,0), (x, height))
-        for y in range(0, height,tilesize):
-            #draws vertical lines
-            pygame.draw.line(self.screen, LIGHTGREY, (0,y), (width, y))
 
         #draws text
     def draw_text(self, surface, text, size, color, x, y):
@@ -151,14 +147,16 @@ class Game:
         text_rect = text_surface.get_rect()
         text_rect.topleft = (x*tilesize,y*tilesize)
         surface.blit(text_surface, text_rect)
-    #draws sprites, background color, and calls the draw_grid function
+    #draws sprites, background color
     def draw(self):
-        self.screen.fill(BGCOLOR)
-        self.draw_grid()
-        
+        #makes background look like endless walls
+        self.screen.fill(AQUA)
         self.draw_text(self.screen, str(self.p1.moneybag), 64, white, 1,1)
+        #creates map on screen
         self.screen.blit(self.map,self.p1.map_pos)
+        #puts background on map
         self.map.fill(BGCOLOR)
+        #draws the spriteson the map
         self.all_sprites.draw(self.map)
         #self.p1.render(self.screen)
         pygame.display.flip()

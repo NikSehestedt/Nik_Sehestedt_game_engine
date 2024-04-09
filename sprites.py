@@ -1,11 +1,14 @@
 #This file was created by Nik Sehestedt
+#imports the libraries
 import pygame as pg
 from settings import *
 from random import choice
 from random import randint
 from utils import *
-# write a player class
+from math import *
+#sets vec
 vec = pg.math.Vector2
+#creates a collide_with_walls for the enemies
 def collide_with_walls(sprite, group, dir):
     if dir == "x":
         hits = pg.sprite.spritecollide(sprite, group, False)
@@ -25,36 +28,42 @@ def collide_with_walls(sprite, group, dir):
                 sprite.pos.y = hits[0].rect.bottom + sprite.rect.height / 2
             sprite.vel.y = 0
             sprite.rect.centery = sprite.pos.y
-
+#creates player
 class Player(pg.sprite.Sprite):
-    def __init__(self, game, x, y):
+    def __init__(self, game, x,y):
+        #assigns player to groups
         self.groups = game.all_sprites, game.players
+        #initializes sprite code
         pg.sprite.Sprite.__init__(self, self.groups)
+        #sets all the data up
         self.game = game
-        #self.groups = game.all_sprites
-        #self.image = pg.Surface((tilesize, tilesize))
         self.effect = ""
         self.image = game.player_img
-        #self.image.fill(GREEN)
         self.rect = self.image.get_rect()
         self.vx, self.vy = 0, 0
         self.mx, self.my =0,0
-        self.x = x * tilesize
-        self.y = y * tilesize
+        self.x = x*tilesize
+        self.y = y*tilesize
         self.moneybag = 0
         self.speed = 300
         self.pos = vec(0,0)
+        self.position = vec(self.x, self.y)
         self.sheathed = True
         self.cooling = False
         self.damagecooling = False
+        self.swordcooling = False
         self.health = 100
-        self.movebox = [506, 522, 344, 360]
+        self.movebox = [(self.game.p1col*32) - 16, (self.game.p1col*32), (self.game.p1row*32)-16, (self.game.p1row*32)]
         self.map_pos = (0,0)
+        self.mapx, self.mapy = self.map_pos
+    #kills the player
     def death(self):
         self.x = self.game.p1col*tilesize
         self.y = self.game.p1row*tilesize
         self.speed = 300
+        self.health = 100
         print("You Died")
+    #makes it so the player can move the map creating the illusion of a moving camera
     def movebox_collisions(self):
         self.mx, self.my = 0,0
         if self.mx != 0 and self.my != 0:
@@ -104,7 +113,7 @@ class Player(pg.sprite.Sprite):
             self.rect.y = self.y
             self.movebox[2] += -self.my * self.game.dt
             self.movebox[3] += -self.my * self.game.dt
-        
+    #collision for walls
     def collide_with_walls(self, dir):
         if dir == "x":
             hits = pg.sprite.spritecollide(self, self.game.walls, False)
@@ -125,7 +134,7 @@ class Player(pg.sprite.Sprite):
                 self.vy = 0
                 self.rect.y = self.y
 
-
+    #collisions for when the player is invincible (currently bugged)
     def invccollisions(self, group, dir):
         if self.effect == "invincibility":
             if dir == "x":
@@ -159,7 +168,7 @@ class Player(pg.sprite.Sprite):
                 if self.effect != "invincibility":
                     self.health -= 3
                     self.damagecooling = True
-                    self.game.cooldown.cd = 0.3
+                    self.game.cooldown.cd = 1
                 if self.effect == "invincibility":
                     self.rect.x = self.x
                     self.invccollisions(self.game.deathblocks, 'x')
@@ -168,8 +177,9 @@ class Player(pg.sprite.Sprite):
             if str(hits[0].__class__.__name__) == "Enemy":
                 if self.effect != "invincibility":
                     self.health-=randint(10,25)
+                    print("I took damage")
                     self.damagecooling = True
-                    self.game.cooldown.cd = 0.4
+                    self.game.cooldown.cd = 2
             #if its a powerup
             if str(hits[0].__class__.__name__) == "PowerUp":
                 self.effect = choice(Powerupeffects)
@@ -184,11 +194,11 @@ class Player(pg.sprite.Sprite):
                     self.image = self.game.invcplayer_img
 
 
-               
+    #finds out what keys you are pressing
     def get_keys(self):
-        self.mapx,self.mapy = self.map_pos
         self.vx, self.vy = 0, 0
         keys = pg.key.get_pressed()
+        #standard directions
         if keys[pg.K_a] or keys[pg.K_LEFT]:
             self.vx = -self.speed
             self.goingleft = True
@@ -205,50 +215,22 @@ class Player(pg.sprite.Sprite):
             self.vx *= 0.7071
             self.vy *= 0.7071
         else:
+            #for movebox collisions
             self.goingleft = False
             self.goingright = False
             self.goingup = False
             self.goingdown = False
-        
         if self.sheathed == True:
-            if keys[pg.K_e]:
-                self.weapon = Weapon(self.game, self.rect.x, self.rect.y - 32)
-                self.sheathed = False
-        # if self.rect.x <= self.movebox[0]:
-        #     self.vx = self.speed
-        #     self.mx = self.speed
-        #     self.movebox[0] += -self.mx * self.game.dt
-        #     self.movebox[1] += -self.mx * self.game.dt
-        # elif self.rect.x >= self.movebox[1]:
-        #     self.vx = -self.speed
-        #     self.mx = -self.speed
-        #     self.movebox[0] += -self.mx * self.game.dt
-        #     self.movebox[1] += -self.mx * self.game.dt
-        # if self.rect.y <= self.movebox[2]:
-        #     self.vy = self.speed
-        #     self.my = self.speed
-        #     self.movebox[2] += -self.my * self.game.dt
-        #     self.movebox[3] += -self.my * self.game.dt
-        # elif self.rect.y >= self.movebox[3]:
-        #     self.vy = -self.speed
-        #     self.my = -self.speed
-        #     self.movebox[2] += -self.my * self.game.dt
-        #     self.movebox[3] += -self.my * self.game.dt
-        
-        
+            if self.swordcooling == False:
+                if keys[pg.K_e]:
+                    self.weapon = Weapon(self.game, self.rect.x, self.rect.y)
+                    self.sheathed = False
+                    #makes it so you dont accidently instantly delete the sword
+                    self.swordcooling = True
+                    self.game.cooldown.cd = 3
 
-
-    # def interact(self):
-    #     keys = pg.key.get_pressed()
-    #     if keys[pg.K_KP_ENTER]:
-
-    # bad move
-    # def move(self, dx = 0, dy = 0):
-    #     self.x += dx
-    #     self.y += dy
-    #better move
+    #updates everything for the player(everything that gets repeated goes here)
     def update(self):
-        
         self.get_keys()
         self.x += self.vx * self.game.dt
         self.y += self.vy * self.game.dt
@@ -261,135 +243,160 @@ class Player(pg.sprite.Sprite):
         self.mapx += self.mx *self.game.dt
         self.mapy += self.my *self.game.dt
         self.map_pos = (self.mapx,self.mapy)
+        #disables cooldowns
         if self.game.cooldown.cd < 1:
             self.cooling = False
+            self.damagecooling = False
+            self.swordcooling = False
             self.speed = 300
             self.image = self.game.player_img
             self.effect = ""
+        #lets us pick up powerups again
         if not self.cooling:
             self.collide_with_group(self.game.power_ups, True)
+        #ends i-frames
         if not self.damagecooling:
             self.collide_with_group(self.game.deathblocks, False)
             self.collide_with_group(self.game.mobs, False)
+        #triggers death
         if self.health <= 0:
             self.death()
        
-
-   # def render(self,display):
-    #    display.blit(self.image,(self.rect.x,self.rect.y))
+#creates the sword
 class Weapon(pg.sprite.Sprite):
     def __init__(self,game,x,y):
         self.groups = game.all_sprites, game.weapons
         pg.sprite.Sprite.__init__(self, self.groups)
         self.game = game
-        self.image = game.sword_img
+        self.originalimage = game.sword_img
+        self.image = game.sworddown_img
         self.rect = self.image.get_rect()
         self.x = x
         self.y = y
-        self.rect.x = self.x * tilesize
-        self.rect.y = self.y * tilesize
-        #self.cooling = False
-
-    # def collide_with_group(self, group, kill):
-    #     hits = pg.sprite.spritecollide(self, group, kill)
-    #     if hits:
-    #         if str(hits[0].__class__.__name__) == "Enemy":
-    #            hits[0].hp -= 1
-    #            self.game.cooldown.cd = 1
-    #            self.cooling = True
+        self.vx, self.vy = 0,0
+        self.rect.x = self.x
+        self.rect.y = self.y
+        
+    #useless
+    def follow(self,obj):
+        self.vx = obj.vx
+        self.vy = obj.vy
+    #sword spins around the player(currently buggy)
+    def rotate(self):
+        mouse_x, mouse_y = pg.mouse.get_pos()
+        rel_x, rel_y = mouse_x - self.x, mouse_y - self.y
+        angle = (180 / pi) * -atan2(rel_y, rel_x)
+        self.image = pg.transform.rotate(self.originalimage, int(angle))
+        self.rect = self.image.get_rect(center = (self.game.p1.x + 32*cos(angle), self.game.p1.y + 32*sin(angle)))
+        self.center = (self.game.p1.x - 32*cos(angle), self.game.p1.y - 32*sin(angle))
+    #updates the sword
     def update(self):
+        self.follow(self.game.p1)
+        self.rotate()
+        self.x, self.y = self.center
+        #self.x += self.vx * self.game.dt
+        #self.y += self.vy * self.game.dt
+        self.rect.x = self.x
+        self.rect.y = self.y
         keys = pg.key.get_pressed()
         if self.game.p1.sheathed == False:
-            if keys[pg.K_a] or keys[pg.K_LEFT]:
-                self.rect.x = self.game.p1.rect.x-32
-                self.rect.y = self.game.p1.rect.y
-                self.image = self.game.swordleft_img
-            if keys[pg.K_d] or keys[pg.K_RIGHT]:
-                self.rect.x = self.game.p1.rect.x+32
-                self.rect.y = self.game.p1.rect.y
-                self.image = self.game.swordright_img
-            if keys[pg.K_w] or keys[pg.K_UP]:
-                self.rect.x = self.game.p1.rect.x
-                self.rect.y = self.game.p1.rect.y-32
-                self.image = self.game.sword_img
-            if keys[pg.K_s] or keys[pg.K_DOWN]:
-                self.rect.x = self.game.p1.rect.x
-                self.rect.y = self.game.p1.rect.y+32
-                self.image = self.game.sworddown_img
-            if keys[pg.K_e]:
-                self.kill()
-                self.game.p1.sheathed = True
-                
-        
-        #if self.game.cooldown.cd <= 0:
-        #    self.cooling = False
-        #if not self.cooling:
-        #    self.collide_with_group(self.game.mobs, False)
-        #if self.sheathed == False:
-        #     if keys[pg.K_e]:
-                
-        #         self.sheathed = True
-        
-
-
+            # if keys[pg.K_a] or keys[pg.K_LEFT]:
+            #     self.rect.x = self.game.p1.rect.x
+            #     self.rect.y = self.game.p1.rect.y-32
+            # #     self.rect.x = self.game.p1.rect.x-32
+            # #     self.rect.y = self.game.p1.rect.y
+            # #     #self.image = self.game.swordleft_img
+            # if keys[pg.K_d] or keys[pg.K_RIGHT]:
+            #     self.rect.x = self.game.p1.rect.x
+            #     self.rect.y = self.game.p1.rect.y-32
+            # #     self.rect.x = self.game.p1.rect.x+32
+            # #     self.rect.y = self.game.p1.rect.y
+            # #     #self.image = self.game.swordright_img
+            # if keys[pg.K_w] or keys[pg.K_UP]:
+            #     self.rect.x = self.game.p1.rect.x
+            #     self.rect.y = self.game.p1.rect.y-32
+            # #     #self.image = self.game.sword_img
+            # if keys[pg.K_s] or keys[pg.K_DOWN]:
+            #     self.rect.x = self.game.p1.rect.x
+            #     self.rect.y = self.game.p1.rect.y-32
+            # #     self.rect.x = self.game.p1.rect.x
+            # #     self.rect.y = self.game.p1.rect.y+32
+                #self.image = self.game.sworddown_img
+            if self.game.p1.swordcooling == False:
+                if keys[pg.K_e]:
+                    self.kill()
+                    self.game.p1.sheathed = True
+                    self.game.p1.swordcooling = True
+                    self.game.cooldown.cd = 3
+#creates walls
 class Wall(pg.sprite.Sprite):
+    #everything in init follows the same structure as Player
     def __init__(self, game, x, y):
         self.groups = game.all_sprites, game.walls, game.np_sprites
         pg.sprite.Sprite.__init__(self, self.groups)
         self.game = game
-        #self.groups = game.all_sprites
         self.image = pg.Surface((tilesize, tilesize))
         self.image.fill(AQUA)
-        #self.image = game.wall_img
         self.rect = self.image.get_rect()
         self.x = x
         self.y = y
         self.rect.x = x * tilesize
         self.rect.y = y * tilesize
-
+#creates deathblocks
 class Deathblock(pg.sprite.Sprite):
+    #same here
     def __init__(self, game, x,y):
         self.groups = game.all_sprites, game.deathblocks, game.np_sprites
         pg.sprite.Sprite.__init__(self, self.groups)
         self.game = game
-        #self.image = pg.Surface((tilesize, tilesize))
-        #self.image.fill(RED)
         self.image = game.deathblock_img
         self.rect = self.image.get_rect()
         self.x = x
         self.y = y
         self.rect.x = x * tilesize
         self.rect.y = y * tilesize
-
+#creates coins
 class Coin(pg.sprite.Sprite):
+    #and here
     def __init__(self, game, x, y):
         self.groups = game.all_sprites, game.coins, game.np_sprites
         pg.sprite.Sprite.__init__(self, self.groups)
         self.game = game
-        #self.image = pg.Surface((tilesize, tilesize))
-        #self.image.fill(YELLOW)
         self.image = game.coin_img
         self.rect = self.image.get_rect()
         self.x = x
         self.y = y
         self.rect.x = x * tilesize
         self.rect.y = y * tilesize
-
+#creates powerups
 class PowerUp(pg.sprite.Sprite):
+    #anddd here
     def __init__(self, game, x, y):
         self.groups = game.all_sprites, game.power_ups, game.np_sprites
         pg.sprite.Sprite.__init__(self, self.groups)
         self.game = game
-        #self.image = pg.Surface((tilesize, tilesize))
-        #self.image.fill(PURPLE)
         self.image = game.powerups_img
         self.rect = self.image.get_rect()
         self.x = x
         self.y = y
         self.rect.x = x * tilesize
         self.rect.y = y * tilesize
-
+#creates safespaces(currently enemies can clip so not really safe)
+class Safespace(pg.sprite.Sprite):
+    #here too
+    def __init__(self, game, x, y):
+        self.groups = game.all_sprites, game.safewalls, game.np_sprites
+        pg.sprite.Sprite.__init__(self, self.groups)
+        self.game = game
+        self.image = game.safe_img
+        self.rect = self.image.get_rect()
+        self.x = x
+        self.y = y
+        self.rect.x = x * tilesize
+        self.rect.y = y * tilesize
+#creates enemies
 class Enemy(pg.sprite.Sprite):
+    #and finally here
     def __init__(self, game, x, y):
         self.groups = game.all_sprites, game.mobs, game.np_sprites
         pg.sprite.Sprite.__init__(self, self.groups)
@@ -406,17 +413,16 @@ class Enemy(pg.sprite.Sprite):
         self.hp = 3
         self.cooling = False
         self.imagecooling = 0
+    #collides with sprites(only the sword rn)
     def collide_with_group(self, group, kill):
         hits = pg.sprite.spritecollide(self, group, kill)
         if hits:
             if str(hits[0].__class__.__name__) == "Weapon":
                 self.hp -= 1
                 self.cooling = True
-                self.game.cooldown.cd = 3
-                self.damageicon = True
-                self.imagecooling = self.game.cooldown.cd = 0.1
+                self.game.cooldown.cd = 2
                 print("The enemy took damage")
-
+    #moves toward the player and collides with walls deathblocks and safewalls
     def update(self):
         self.rot = (self.game.p1.rect.center - self.pos).angle_to(vec(1, 0))
         self.rect.center = self.pos
@@ -428,18 +434,13 @@ class Enemy(pg.sprite.Sprite):
         collide_with_walls(self, self.game.walls, 'y')
         collide_with_walls(self, self.game.deathblocks, 'x')
         collide_with_walls(self, self.game.deathblocks, 'y')
-        #self.collide_with_group(self.game.weapons, False)
-        if self.game.cooldown.cd <= 0:
+        collide_with_walls(self, self.game.safewalls, 'x')
+        collide_with_walls(self, self.game.safewalls, 'y')
+        #these are to create i-frames
+        if self.game.cooldown.cd < 1:
             self.cooling = False
-        if self.imagecooling <= 0:
-            self.damageicon = False
-        if self.damageicon:
-            self.image = pg.Surface((tilesize, tilesize))
-            self.image.fill(white)
-        if not self.damageicon:
-            self.image = self.game.enemy_img
-        
         if not self.cooling:
             self.collide_with_group(self.game.weapons, False)
+        #kills it
         if self.hp <= 0:
             self.kill()
