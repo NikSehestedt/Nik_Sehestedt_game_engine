@@ -462,7 +462,7 @@ class Enemy(pg.sprite.Sprite):
         #kills it
         if self.hp <= 0:
             self.kill()
-            self.game.p1.moneybags += 2
+            self.game.p1.moneybag += 2
     #creates bosses
 class Boss(pg.sprite.Sprite):
     #and finally here
@@ -512,4 +512,4 @@ class Boss(pg.sprite.Sprite):
         #kills it
         if self.hp <= 0:
             self.kill()
-            self.game.p1.moneybags += 20
+            self.game.p1.moneybag += 20
