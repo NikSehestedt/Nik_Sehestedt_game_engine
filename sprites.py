@@ -58,6 +58,8 @@ class Player(pg.sprite.Sprite):
         self.mapx, self.mapy = self.map_pos
     #kills the player
     def death(self):
+        self.rect.x = self.game.p1col*tilesize
+        self.rect.y = self.game.p1row*tilesize
         self.x = self.game.p1col*tilesize
         self.y = self.game.p1row*tilesize
         self.speed = 300
@@ -163,20 +165,31 @@ class Player(pg.sprite.Sprite):
             #if its a coin
             if str(hits[0].__class__.__name__) == "Coin":
                 self.moneybag += 1
-               # if self.moneybag == 25
+               
+        #if its a deathblock
             if str(hits[0].__class__.__name__) == "Deathblock":
                 if self.effect != "invincibility":
                     self.health -= 3
                     self.damagecooling = True
                     self.game.cooldown.cd = 1
                 if self.effect == "invincibility":
+                    #makes it so you cant phase through deathblocks while invincible
                     self.rect.x = self.x
                     self.invccollisions(self.game.deathblocks, 'x')
                     self.rect.y = self.y
                     self.invccollisions(self.game.deathblocks, 'y')
+                    #collides with enemies
             if str(hits[0].__class__.__name__) == "Enemy":
                 if self.effect != "invincibility":
                     self.health-=randint(10,25)
+                    print("I took damage")
+                    self.damagecooling = True
+                    self.game.cooldown.cd = 2
+                    #collides with bosses
+            if str(hits[0].__class__.__name__) == "Boss":
+                if self.effect != "invincibility":
+                    #more damage than normal enemy
+                    self.health-=randint(15,35)
                     print("I took damage")
                     self.damagecooling = True
                     self.game.cooldown.cd = 2
@@ -258,6 +271,7 @@ class Player(pg.sprite.Sprite):
         if not self.damagecooling:
             self.collide_with_group(self.game.deathblocks, False)
             self.collide_with_group(self.game.mobs, False)
+            self.collide_with_group(self.game.bosses, False)
         #triggers death
         if self.health <= 0:
             self.death()
@@ -269,7 +283,7 @@ class Weapon(pg.sprite.Sprite):
         pg.sprite.Sprite.__init__(self, self.groups)
         self.game = game
         self.originalimage = game.sword_img
-        self.image = game.sworddown_img
+        self.image = game.sword_img
         self.rect = self.image.get_rect()
         self.x = x
         self.y = y
@@ -282,20 +296,25 @@ class Weapon(pg.sprite.Sprite):
         self.vx = obj.vx
         self.vy = obj.vy
     #sword spins around the player(currently buggy)
-    def rotate(self):
-        mouse_x, mouse_y = pg.mouse.get_pos()
-        rel_x, rel_y = mouse_x - self.x, mouse_y - self.y
-        angle = (180 / pi) * -atan2(rel_y, rel_x)
-        self.image = pg.transform.rotate(self.originalimage, int(angle))
-        self.rect = self.image.get_rect(center = (self.game.p1.x + 32*cos(angle), self.game.p1.y + 32*sin(angle)))
-        self.center = (self.game.p1.x - 32*cos(angle), self.game.p1.y - 32*sin(angle))
+    # def rotate(self):
+    #     mouse_x, mouse_y = pg.mouse.get_pos()
+    #     rel_x, rel_y = mouse_x - self.x, mouse_y - self.y
+    #     angle = (180 / pi) * -atan2(rel_y, rel_x)
+    #     self.image = pg.transform.rotate(self.originalimage, int(angle))
+    #     self.rect = self.image.get_rect(center = (self.game.p1.x + 32*cos(angle), self.game.p1.y + 32*sin(angle)))
+    #     self.center = (self.game.p1.x + 32*cos(angle), self.game.p1.y + 32*sin(angle))
+    def point_at(self, x, y):
+        self.angle = 180+degrees(atan2(x-self.game.p1.rect.x, y-self.game.p1.rect.y))
+        self.image = pg.transform.rotate(self.originalimage, self.angle)
+        self.rect = self.image.get_rect(center = ((self.game.p1.rect.x + 32*cos(self.angle)), (self.game.p1.rect.y + 32*sin(self.angle))))
+        self.circle = ((self.game.p1.rect.x + 32*cos(self.angle)), (self.game.p1.rect.y + 32*sin(self.angle)))
     #updates the sword
     def update(self):
         self.follow(self.game.p1)
-        self.rotate()
-        self.x, self.y = self.center
+        self.point_at(*pg.mouse.get_pos())
         #self.x += self.vx * self.game.dt
         #self.y += self.vy * self.game.dt
+        self.x, self.y = self.circle
         self.rect.x = self.x
         self.rect.y = self.y
         keys = pg.key.get_pressed()
@@ -400,7 +419,6 @@ class Enemy(pg.sprite.Sprite):
     def __init__(self, game, x, y):
         self.groups = game.all_sprites, game.mobs, game.np_sprites
         pg.sprite.Sprite.__init__(self, self.groups)
-        self.damageicon = False
         self.game = game
         self.image = self.game.enemy_img
         self.rect = self.image.get_rect()
@@ -444,3 +462,54 @@ class Enemy(pg.sprite.Sprite):
         #kills it
         if self.hp <= 0:
             self.kill()
+            self.game.p1.moneybags += 2
+    #creates bosses
+class Boss(pg.sprite.Sprite):
+    #and finally here
+    def __init__(self, game, x, y):
+        self.groups = game.all_sprites, game.bosses, game.np_sprites
+        pg.sprite.Sprite.__init__(self, self.groups)
+        self.game = game
+        self.image = self.game.boss_img
+        self.rect = self.image.get_rect()
+        self.pos = vec(x, y) * tilesize
+        self.vel = vec(0, 0)
+        self.acc = vec(0, 0)
+        self.rect.center = self.pos
+        self.rot = 0
+        self.speed = 100
+        self.hp = 30
+        self.cooling = False
+        self.imagecooling = 0
+    #collides with sprites(only the sword rn)
+    def collide_with_group(self, group, kill):
+        hits = pg.sprite.spritecollide(self, group, kill)
+        if hits:
+            if str(hits[0].__class__.__name__) == "Weapon":
+                self.hp -= 1
+                self.cooling = True
+                self.game.cooldown.cd = 2
+                print("The enemy took damage")
+    #moves toward the player and collides with walls deathblocks and safewalls
+    def update(self):
+        self.rot = (self.game.p1.rect.center - self.pos).angle_to(vec(1, 0))
+        self.rect.center = self.pos
+        self.acc = vec(self.speed, 0).rotate(-self.rot)
+        self.acc += self.vel * -1
+        self.vel += self.acc * self.game.dt
+        self.pos += self.vel * self.game.dt + 0.5 * self.acc * self.game.dt ** 2
+        collide_with_walls(self, self.game.walls, 'x')
+        collide_with_walls(self, self.game.walls, 'y')
+        collide_with_walls(self, self.game.deathblocks, 'x')
+        collide_with_walls(self, self.game.deathblocks, 'y')
+        collide_with_walls(self, self.game.safewalls, 'x')
+        collide_with_walls(self, self.game.safewalls, 'y')
+        #these are to create i-frames
+        if self.game.cooldown.cd < 1:
+            self.cooling = False
+        if not self.cooling:
+            self.collide_with_group(self.game.weapons, False)
+        #kills it
+        if self.hp <= 0:
+            self.kill()
+            self.game.p1.moneybags += 20

@@ -44,11 +44,12 @@ class Game:
         self.swordright_img = pygame.image.load(path.join(img_folder, 'Swordright.png')).convert_alpha()
         self.invcplayer_img = pygame.image.load(path.join(img_folder, 'GoldMario.png')).convert_alpha()
         self.deathblock_img = pygame.image.load(path.join(img_folder, 'Lava.png')).convert_alpha()
-        self.enemy_img = pygame.image.load(path.join(img_folder, 'Baldron.png')).convert_alpha()
+        self.enemy_img = pygame.image.load(path.join(img_folder, 'enemy.png')).convert_alpha()
         #self.wall_img = pygame.image.load(path.join(img_folder, 'Johnson.png')).convert_alpha()
         self.powerups_img = pygame.image.load(path.join(img_folder, 'Speedup.png')).convert_alpha()
         self.coin_img = pygame.image.load(path.join(img_folder, 'Coin.png')).convert_alpha()
         self.safe_img = pygame.image.load(path.join(img_folder, 'Safezone.png')).convert_alpha()
+        self.boss_img = pygame.image.load(path.join(img_folder, 'boss.png')).convert_alpha()
         self.map_data = []
         '''
         The with statement is a context manager in Python. 
@@ -75,6 +76,7 @@ class Game:
         self.mobs = pygame.sprite.Group()
         self.weapons = pygame.sprite.Group()
         self.safewalls = pygame.sprite.Group()
+        self.bosses = pygame.sprite.Group()
         #makes the map
         self.map = pygame.Surface((len(self.map_data[0])*32,len(self.map_data)*32))
         for row, tiles in enumerate(self.map_data):
@@ -105,6 +107,9 @@ class Game:
                 #makes safespaces
                 if tile == 'S':
                     Safespace(self, col, row)
+                #makes bosses
+                if tile == 'B':
+                    Boss(self, col, row)
 
     
 
