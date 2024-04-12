@@ -8,7 +8,7 @@ from sprites import *
 import sys
 from random import randint
 from os import path
-from math import floor
+from math import *
 from utils import *
 
 
@@ -59,7 +59,6 @@ class Game:
         #sorts through the map
         with open(path.join(game_folder, 'map.txt'), 'rt') as f:
             for line in f:
-                print(line)
                 self.map_data.append(line)
 
     #puts our sprites in Game
@@ -77,12 +76,11 @@ class Game:
         self.weapons = pygame.sprite.Group()
         self.safewalls = pygame.sprite.Group()
         self.bosses = pygame.sprite.Group()
+        self.secrets = pygame.sprite.Group()
         #makes the map
         self.map = pygame.Surface((len(self.map_data[0])*32,len(self.map_data)*32))
         for row, tiles in enumerate(self.map_data):
-            print(row)
             for col, tile in enumerate(tiles):
-                print(col)
                 #makes walls on the screen
                 if tile == '1':
                     Wall(self, col, row)
@@ -110,6 +108,9 @@ class Game:
                 #makes bosses
                 if tile == 'B':
                     Boss(self, col, row)
+                #makes secretwalls
+                if tile == 'V':
+                    SecretWall(self, col, row)
 
     
 
@@ -142,7 +143,16 @@ class Game:
         #movementcooldown = self.cooldown.countdown(0.1)
         #if movementcooldown == 0:
             #self.mobs.update()
-        
+    # def screen_to_map(self):
+    #     mouse_pos = pg.mouse.get_pos()
+    #     # Adjust coordinates by the player's position on the map
+    #     self.mousex = mouse_pos[0] + self.p1.map_pos[0]
+    #     self.mousey = mouse_pos[1] + self.p1.map_pos[1] 
+    #     return self.mousex, self.mousey
+    def map_to_screen(self):
+        player_screen_x = self.p1.map_pos[0]+ self.p1.x
+        player_screen_y = self.p1.map_pos[1]+ self.p1.y
+        return player_screen_x, player_screen_y
 
         #draws text
     def draw_text(self, surface, text, size, color, x, y):
@@ -171,7 +181,6 @@ class Game:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.quit()
-
         
 
 

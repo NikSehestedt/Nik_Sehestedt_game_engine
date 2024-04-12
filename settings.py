@@ -2,7 +2,7 @@
 width, height = 1024, 768
 tilesize = 32
 PLAYER_SPEED = 300
-Powerupeffects = ["speed", "invincibility"]
+Powerupeffects = ["speed", "invincibility", "healing"]
 #colors
 BGCOLOR = ((40,81,39))
 white = ((255,255,255))

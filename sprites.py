@@ -54,67 +54,20 @@ class Player(pg.sprite.Sprite):
         self.swordcooling = False
         self.health = 100
         self.movebox = [(self.game.p1col*32) - 16, (self.game.p1col*32), (self.game.p1row*32)-16, (self.game.p1row*32)]
+        self.moveboxcenter = ((self.game.p1col*32)-8, (self.game.p1row*32)-8)
         self.map_pos = (0,0)
         self.mapx, self.mapy = self.map_pos
     #kills the player
     def death(self):
-        self.rect.x = self.game.p1col*tilesize
-        self.rect.y = self.game.p1row*tilesize
-        self.x = self.game.p1col*tilesize
-        self.y = self.game.p1row*tilesize
-        self.speed = 300
-        self.health = 100
+        # self.rect.x = self.game.p1col*tilesize
+        # self.rect.y = self.game.p1row*tilesize
+        # self.x = self.game.p1col*tilesize
+        # self.y = self.game.p1row*tilesize
+        # self.speed = 300
+        # self.health = 100
+        self.game.playing = False
         print("You Died")
-    #makes it so the player can move the map creating the illusion of a moving camera
-    def movebox_collisions(self):
-        self.mx, self.my = 0,0
-        if self.mx != 0 and self.my != 0:
-            self.mx *= 0.7071
-            self.my *= 0.7071
-        if self.rect.x <= self.movebox[0]:
-            if self.vx < 0:
-                    self.x = self.movebox[0]
-            self.mx = self.speed
-            if self.goingright == True:
-                self.vx = self.mx
-            else:
-                self.vx = 0
-            self.rect.x = self.x
-            self.movebox[0] += -self.mx * self.game.dt
-            self.movebox[1] += -self.mx * self.game.dt
-        if self.rect.x >= self.movebox[1]:
-            if self.vx > 0:
-                    self.x = self.movebox[1]
-            self.mx = -self.speed
-            if self.goingleft == True:
-                self.vx = self.mx
-            else:
-                self.vx = 0
-            self.rect.x = self.x
-            self.movebox[0] += -self.mx * self.game.dt
-            self.movebox[1] += -self.mx * self.game.dt
-        if self.rect.y <= self.movebox[2]:
-            if self.vy < 0:
-                    self.y = self.movebox[2]
-            self.my = self.speed
-            if self.goingup == True:
-                self.vy = self.my
-            else:
-                self.vy = 0
-            self.rect.y = self.y
-            self.movebox[2] += -self.my * self.game.dt
-            self.movebox[3] += -self.my * self.game.dt
-        if self.rect.y >= self.movebox[3]:
-            if self.vy > 0:
-                    self.y = self.movebox[3]
-            self.my = -self.speed
-            if self.goingdown == True:
-                self.vy = self.my
-            else:
-                self.vy = 0
-            self.rect.y = self.y
-            self.movebox[2] += -self.my * self.game.dt
-            self.movebox[3] += -self.my * self.game.dt
+    
     #collision for walls
     def collide_with_walls(self, dir):
         if dir == "x":
@@ -201,8 +154,11 @@ class Player(pg.sprite.Sprite):
                 self.cooling = True
                 if self.effect == "speed":
                     self.speed += 100
-                    
                     self.image = self.game.player_img
+                if self.effect == "healing":
+                    self.health += 50
+                    if self.health > 100:
+                        self.health = 100
                 if self.effect == "invincibility":
                     self.image = self.game.invcplayer_img
 
@@ -236,11 +192,62 @@ class Player(pg.sprite.Sprite):
         if self.sheathed == True:
             if self.swordcooling == False:
                 if keys[pg.K_e]:
-                    self.weapon = Weapon(self.game, self.rect.x, self.rect.y)
+                    self.weapon = Weapon(self.game, self.map_pos)
                     self.sheathed = False
                     #makes it so you dont accidently instantly delete the sword
                     self.swordcooling = True
                     self.game.cooldown.cd = 3
+    #makes it so the player can move the map creating the illusion of a moving camera
+    def movebox_collisions(self):
+        if self.game.playing:
+            self.mx, self.my = 0,0
+            if self.mx != 0 and self.my != 0:
+                self.mx *= 0.7071
+                self.my *= 0.7071
+            if self.rect.x <= self.movebox[0]:
+                if self.vx < 0:
+                        self.x = self.movebox[0]
+                self.mx = self.speed
+                if self.goingright == True:
+                    self.vx = self.mx
+                else:
+                    self.vx = 0
+                self.rect.x = self.x
+                self.movebox[0] += -self.mx * self.game.dt
+                self.movebox[1] += -self.mx * self.game.dt
+            if self.rect.x >= self.movebox[1]:
+                if self.vx > 0:
+                        self.x = self.movebox[1]
+                self.mx = -self.speed
+                if self.goingleft == True:
+                    self.vx = self.mx
+                else:
+                    self.vx = 0
+                self.rect.x = self.x
+                self.movebox[0] += -self.mx * self.game.dt
+                self.movebox[1] += -self.mx * self.game.dt
+            if self.rect.y <= self.movebox[2]:
+                if self.vy < 0:
+                        self.y = self.movebox[2]
+                self.my = self.speed
+                if self.goingup == True:
+                    self.vy = self.my
+                else:
+                    self.vy = 0
+                self.rect.y = self.y
+                self.movebox[2] += -self.my * self.game.dt
+                self.movebox[3] += -self.my * self.game.dt
+            if self.rect.y >= self.movebox[3]:
+                if self.vy > 0:
+                        self.y = self.movebox[3]
+                self.my = -self.speed
+                if self.goingdown == True:
+                    self.vy = self.my
+                else:
+                    self.vy = 0
+                self.rect.y = self.y
+                self.movebox[2] += -self.my * self.game.dt
+                self.movebox[3] += -self.my * self.game.dt
 
     #updates everything for the player(everything that gets repeated goes here)
     def update(self):
@@ -256,6 +263,15 @@ class Player(pg.sprite.Sprite):
         self.mapx += self.mx *self.game.dt
         self.mapy += self.my *self.game.dt
         self.map_pos = (self.mapx,self.mapy)
+        if self.movebox[0] < self.movebox[1]:
+            self.moveboxcenterx = ((self.movebox[1] - self.movebox[0])/2) + self.movebox[0]
+        else:
+            self.moveboxcenterx = ((self.movebox[1] - self.movebox[0])/2) + self.movebox[1]
+        if self.movebox[2] < self.movebox[3]:
+            self.moveboxcentery = ((self.movebox[3] - self.movebox[2])/2) + self.movebox[2]
+        else:
+            self.moveboxcentery = ((self.movebox[3] - self.movebox[2])/2) + self.movebox[3]
+        self.moveboxcenter = (self.moveboxcenterx, self.moveboxcentery)
         #disables cooldowns
         if self.game.cooldown.cd < 1:
             self.cooling = False
@@ -278,43 +294,37 @@ class Player(pg.sprite.Sprite):
        
 #creates the sword
 class Weapon(pg.sprite.Sprite):
-    def __init__(self,game,x,y):
+    def __init__(self,game,map_pos):
         self.groups = game.all_sprites, game.weapons
         pg.sprite.Sprite.__init__(self, self.groups)
         self.game = game
         self.originalimage = game.sword_img
         self.image = game.sword_img
         self.rect = self.image.get_rect()
-        self.x = x
-        self.y = y
-        self.vx, self.vy = 0,0
-        self.rect.x = self.x
-        self.rect.y = self.y
-        
-    #useless
-    def follow(self,obj):
-        self.vx = obj.vx
-        self.vy = obj.vy
-    #sword spins around the player(currently buggy)
-    # def rotate(self):
-    #     mouse_x, mouse_y = pg.mouse.get_pos()
-    #     rel_x, rel_y = mouse_x - self.x, mouse_y - self.y
-    #     angle = (180 / pi) * -atan2(rel_y, rel_x)
-    #     self.image = pg.transform.rotate(self.originalimage, int(angle))
-    #     self.rect = self.image.get_rect(center = (self.game.p1.x + 32*cos(angle), self.game.p1.y + 32*sin(angle)))
-    #     self.center = (self.game.p1.x + 32*cos(angle), self.game.p1.y + 32*sin(angle))
-    def point_at(self, x, y):
-        self.angle = 180+degrees(atan2(x-self.game.p1.rect.x, y-self.game.p1.rect.y))
-        self.image = pg.transform.rotate(self.originalimage, self.angle)
-        self.rect = self.image.get_rect(center = ((self.game.p1.rect.x + 32*cos(self.angle)), (self.game.p1.rect.y + 32*sin(self.angle))))
-        self.circle = ((self.game.p1.rect.x + 32*cos(self.angle)), (self.game.p1.rect.y + 32*sin(self.angle)))
+        self.x, self.y = map_pos
+
+    def point_atmouse(self):
+        # Get mouse position
+        mousemap = pg.mouse.get_pos()
+        p1screen = self.game.map_to_screen()
+        # Calculate angle between player and mouse
+        dx = mousemap[0] - p1screen[0]
+        dy = mousemap[1] - p1screen[1]
+        angle = atan2(dy, dx)
+        if angle < 0:
+            angle += 2 * pi
+        # Rotate the sword image based on the angle
+        self.image = pg.transform.rotate(self.originalimage, -degrees(angle)-90)
+        # Calculate sword position relative to the player
+        self.xrel = cos(angle) * tilesize
+        self.yrel = sin(angle) * tilesize
+        # Set sword position
+        self.x = self.game.p1.x + self.xrel
+        self.y = self.game.p1.y + self.yrel
+
     #updates the sword
     def update(self):
-        self.follow(self.game.p1)
-        self.point_at(*pg.mouse.get_pos())
-        #self.x += self.vx * self.game.dt
-        #self.y += self.vy * self.game.dt
-        self.x, self.y = self.circle
+        self.point_atmouse()
         self.rect.x = self.x
         self.rect.y = self.y
         keys = pg.key.get_pressed()
@@ -352,6 +362,20 @@ class Wall(pg.sprite.Sprite):
     #everything in init follows the same structure as Player
     def __init__(self, game, x, y):
         self.groups = game.all_sprites, game.walls, game.np_sprites
+        pg.sprite.Sprite.__init__(self, self.groups)
+        self.game = game
+        self.image = pg.Surface((tilesize, tilesize))
+        self.image.fill(AQUA)
+        self.rect = self.image.get_rect()
+        self.x = x
+        self.y = y
+        self.rect.x = x * tilesize
+        self.rect.y = y * tilesize
+#creates walls
+class SecretWall(pg.sprite.Sprite):
+    #everything in init follows the same structure as Player
+    def __init__(self, game, x, y):
+        self.groups = game.all_sprites, game.secrets, game.np_sprites
         pg.sprite.Sprite.__init__(self, self.groups)
         self.game = game
         self.image = pg.Surface((tilesize, tilesize))
@@ -422,6 +446,8 @@ class Enemy(pg.sprite.Sprite):
         self.game = game
         self.image = self.game.enemy_img
         self.rect = self.image.get_rect()
+        self.x = x*tilesize
+        self.y = y*tilesize
         self.pos = vec(x, y) * tilesize
         self.vel = vec(0, 0)
         self.acc = vec(0, 0)
