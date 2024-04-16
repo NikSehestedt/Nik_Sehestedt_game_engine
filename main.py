@@ -12,6 +12,17 @@ from math import *
 from utils import *
 
 
+#draws health bar
+def draw_health_bar(surf, x, y, pct):
+    if pct < 0:
+        pct = 0
+    BAR_LENGTH = 320
+    BAR_HEIGHT = 50
+    fill = (pct / 100) * BAR_LENGTH
+    outline_rect = pg.Rect(x, y, BAR_LENGTH, BAR_HEIGHT)
+    fill_rect = pg.Rect(x, y, fill, BAR_HEIGHT)
+    pg.draw.rect(surf, GREEN, fill_rect)
+    pg.draw.rect(surf, WHITE, outline_rect, 2)
 
 #Creates a game and a screen to put the game on
 class Game:
@@ -39,9 +50,6 @@ class Game:
         #all of the textures are set here
         self.player_img = pygame.image.load(path.join(img_folder, 'Mario.png')).convert_alpha()
         self.sword_img = pygame.image.load(path.join(img_folder, 'Sword.png')).convert_alpha()
-        self.sworddown_img = pygame.image.load(path.join(img_folder, 'Sworddown.png')).convert_alpha()
-        self.swordleft_img = pygame.image.load(path.join(img_folder, 'Swordleft.png')).convert_alpha()
-        self.swordright_img = pygame.image.load(path.join(img_folder, 'Swordright.png')).convert_alpha()
         self.invcplayer_img = pygame.image.load(path.join(img_folder, 'GoldMario.png')).convert_alpha()
         self.deathblock_img = pygame.image.load(path.join(img_folder, 'Lava.png')).convert_alpha()
         self.enemy_img = pygame.image.load(path.join(img_folder, 'enemy.png')).convert_alpha()
@@ -50,6 +58,7 @@ class Game:
         self.coin_img = pygame.image.load(path.join(img_folder, 'Coin.png')).convert_alpha()
         self.safe_img = pygame.image.load(path.join(img_folder, 'Safezone.png')).convert_alpha()
         self.boss_img = pygame.image.load(path.join(img_folder, 'boss.png')).convert_alpha()
+        self.medkit_img = pygame.image.load(path.join(img_folder, 'medkit.png')).convert_alpha()
         self.map_data = []
         '''
         The with statement is a context manager in Python. 
@@ -77,6 +86,7 @@ class Game:
         self.safewalls = pygame.sprite.Group()
         self.bosses = pygame.sprite.Group()
         self.secrets = pygame.sprite.Group()
+        self.medkits = pygame.sprite.Group()
         #makes the map
         self.map = pygame.Surface((len(self.map_data[0])*32,len(self.map_data)*32))
         for row, tiles in enumerate(self.map_data):
@@ -111,6 +121,12 @@ class Game:
                 #makes secretwalls
                 if tile == 'V':
                     SecretWall(self, col, row)
+                #makes medkits
+                if tile == 'H':
+                    Medkit(self, col, row)
+        #makes the UI
+        self.UI = pygame.Surface((width, height), pygame.SRCALPHA)
+        self.UI.convert_alpha()
 
     
 
@@ -153,6 +169,7 @@ class Game:
         player_screen_x = self.p1.map_pos[0]+ self.p1.x
         player_screen_y = self.p1.map_pos[1]+ self.p1.y
         return player_screen_x, player_screen_y
+    
 
         #draws text
     def draw_text(self, surface, text, size, color, x, y):
@@ -166,14 +183,18 @@ class Game:
     def draw(self):
         #makes background look like endless walls
         self.screen.fill(AQUA)
-        self.draw_text(self.screen, str(self.p1.moneybag), 64, white, 1,1)
         #creates map on screen
         self.screen.blit(self.map,self.p1.map_pos)
         #puts background on map
         self.map.fill(BGCOLOR)
         #draws the spriteson the map
         self.all_sprites.draw(self.map)
-        #self.p1.render(self.screen)
+        #puts UI on the map
+        self.screen.blit(self.UI, (0,0))
+        #puts the money count on the UI
+        self.draw_text(self.screen, "Kills: "+str(self.p1.kills), 64, WHITE, 25, 1)
+        self.draw_text(self.screen, str(self.p1.moneybag), 64, WHITE, 1,1)
+        draw_health_bar(self.screen, 64, 704, self.p1.health)
         pygame.display.flip()
 
     def events(self):

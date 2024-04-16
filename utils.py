@@ -26,3 +26,17 @@ class Timer():
     # sets current time
     def get_current_time(self):
         self.current_time = floor((pg.time.get_ticks())/1000)
+        
+# # sets up file with multiple images...
+# class Spritesheet:
+#     # utility class for loading and parsing spritesheets
+#     def __init__(self, filename):
+#         self.spritesheet = pg.image.load(filename).convert()
+
+#     def get_image(self, x, y, width, height):
+#         # grab an image out of a larger spritesheet
+#         image = pg.Surface((width, height))
+#         image.blit(self.spritesheet, (0, 0), (x, y, width, height))
+#         # image = pg.transform.scale(image, (width, height))
+#         image = pg.transform.scale(image, (width * 4, height * 4))
+#         return image

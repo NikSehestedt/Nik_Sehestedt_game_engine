@@ -2,10 +2,10 @@
 #imports the libraries
 import pygame as pg
 from settings import *
-from random import choice
-from random import randint
+from random import *
 from utils import *
 from math import *
+from os import path
 #sets vec
 vec = pg.math.Vector2
 #creates a collide_with_walls for the enemies
@@ -39,13 +39,17 @@ class Player(pg.sprite.Sprite):
         self.game = game
         self.effect = ""
         self.image = game.player_img
+        # self.spritesheet = Spritesheet(path.join(img_dir, P1SPRITESHEET))
+        # self.load_images()
+        # self.image = self.standing_frames[0]
         self.rect = self.image.get_rect()
         self.vx, self.vy = 0, 0
         self.mx, self.my =0,0
         self.x = x*tilesize
         self.y = y*tilesize
         self.moneybag = 0
-        self.speed = 300
+        self.kills = 0
+        self.speed = 200
         self.pos = vec(0,0)
         self.position = vec(self.x, self.y)
         self.sheathed = True
@@ -53,10 +57,19 @@ class Player(pg.sprite.Sprite):
         self.damagecooling = False
         self.swordcooling = False
         self.health = 100
-        self.movebox = [(self.game.p1col*32) - 16, (self.game.p1col*32), (self.game.p1row*32)-16, (self.game.p1row*32)]
-        self.moveboxcenter = ((self.game.p1col*32)-8, (self.game.p1row*32)-8)
-        self.map_pos = (0,0)
+        # self.movebox = [(self.game.p1col*32) - 16, (self.game.p1col*32), (self.game.p1row*32)-16, (self.game.p1row*32)]
+        # self.moveboxcenter = ((self.game.p1col*32)-8, (self.game.p1row*32)-8)
+        self.map_pos = (self.x-475,self.y-354)
+        self.UI_pos = (0,0)
         self.mapx, self.mapy = self.map_pos
+        # self.goingleft = False
+        # self.goingright = False
+        # self.goingup = False
+        # self.goingdown = False
+        # self.jumping = False
+        # self.walking = False
+        # self.current_frame = 0
+        # self.last_update = 0
     #kills the player
     def death(self):
         # self.rect.x = self.game.p1col*tilesize
@@ -67,7 +80,35 @@ class Player(pg.sprite.Sprite):
         # self.health = 100
         self.game.playing = False
         print("You Died")
-    
+
+    # def load_images(self):
+    #     self.standing_frames = [self.spritesheet.get_image(0, 0, 32, 32),
+    #                             self.spritesheet.get_image(32, 0, 32, 32)]
+    #     for frame in self.standing_frames:
+    #         frame.set_colorkey(BLACK)
+    #     self.walk_frames_r = [self.spritesheet.get_image(678, 860, 120, 201),
+    #                           self.spritesheet.get_image(692, 1458, 120, 207)]
+    #     self.walk_frames_l = []
+    #     for frame in self.walk_frames_r:
+    #         frame.set_colorkey(BLACK)
+    #         self.walk_frames_l.append(pg.transform.flip(frame, True, False))
+    #     self.jump_frame = self.spritesheet.get_image(256, 0, 128, 128)
+    #     self.jump_frame.set_colorkey(BLACK)
+    # def animate(self):
+    #     now = pg.time.get_ticks()
+    #     if not self.jumping and not self.walking:
+    #         if now - self.last_update > 500:
+    #             self.last_update = now
+    #             self.current_frame = (self.current_frame + 1) % len(self.standing_frames)
+    #             bottom = self.rect.bottom
+    #             self.image = self.standing_frames[self.current_frame]
+    #             self.rect = self.image.get_rect()
+    #             self.rect.bottom = bottom
+    #     if self.jumping:
+    #         bottom = self.rect.bottom
+    #         self.image = self.jump_frame
+    #         self.rect = self.image.get_rect()
+    #         self.rect.bottom = bottom
     #collision for walls
     def collide_with_walls(self, dir):
         if dir == "x":
@@ -155,12 +196,13 @@ class Player(pg.sprite.Sprite):
                 if self.effect == "speed":
                     self.speed += 100
                     self.image = self.game.player_img
-                if self.effect == "healing":
-                    self.health += 50
-                    if self.health > 100:
-                        self.health = 100
                 if self.effect == "invincibility":
                     self.image = self.game.invcplayer_img
+            #if its a medkit
+            if str(hits[0].__class__.__name__) == "Medkit":
+                self.health += randint(30,50)
+                if self.health > 100:
+                        self.health = 100
 
 
     #finds out what keys you are pressing
@@ -198,60 +240,61 @@ class Player(pg.sprite.Sprite):
                     self.swordcooling = True
                     self.game.cooldown.cd = 3
     #makes it so the player can move the map creating the illusion of a moving camera
-    def movebox_collisions(self):
-        if self.game.playing:
-            self.mx, self.my = 0,0
-            if self.mx != 0 and self.my != 0:
-                self.mx *= 0.7071
-                self.my *= 0.7071
-            if self.rect.x <= self.movebox[0]:
-                if self.vx < 0:
-                        self.x = self.movebox[0]
-                self.mx = self.speed
-                if self.goingright == True:
-                    self.vx = self.mx
-                else:
-                    self.vx = 0
-                self.rect.x = self.x
-                self.movebox[0] += -self.mx * self.game.dt
-                self.movebox[1] += -self.mx * self.game.dt
-            if self.rect.x >= self.movebox[1]:
-                if self.vx > 0:
-                        self.x = self.movebox[1]
-                self.mx = -self.speed
-                if self.goingleft == True:
-                    self.vx = self.mx
-                else:
-                    self.vx = 0
-                self.rect.x = self.x
-                self.movebox[0] += -self.mx * self.game.dt
-                self.movebox[1] += -self.mx * self.game.dt
-            if self.rect.y <= self.movebox[2]:
-                if self.vy < 0:
-                        self.y = self.movebox[2]
-                self.my = self.speed
-                if self.goingup == True:
-                    self.vy = self.my
-                else:
-                    self.vy = 0
-                self.rect.y = self.y
-                self.movebox[2] += -self.my * self.game.dt
-                self.movebox[3] += -self.my * self.game.dt
-            if self.rect.y >= self.movebox[3]:
-                if self.vy > 0:
-                        self.y = self.movebox[3]
-                self.my = -self.speed
-                if self.goingdown == True:
-                    self.vy = self.my
-                else:
-                    self.vy = 0
-                self.rect.y = self.y
-                self.movebox[2] += -self.my * self.game.dt
-                self.movebox[3] += -self.my * self.game.dt
+    # def movebox_collisions(self):
+    #     if self.game.playing:
+    #         self.mx, self.my = 0,0
+    #         if self.mx != 0 and self.my != 0:
+    #             self.mx *= 0.7071
+    #             self.my *= 0.7071
+    #         if self.rect.x <= self.movebox[0]:
+    #             if self.vx < 0:
+    #                     self.x = self.movebox[0]
+    #             self.mx = self.speed
+    #             if self.goingright == True:
+    #                 self.vx = self.mx
+    #             else:
+    #                 self.vx = 0
+    #             self.rect.x = self.x
+    #             self.movebox[0] += -self.mx * self.game.dt
+    #             self.movebox[1] += -self.mx * self.game.dt
+    #         if self.rect.x >= self.movebox[1]:
+    #             if self.vx > 0:
+    #                     self.x = self.movebox[1]
+    #             self.mx = -self.speed
+    #             if self.goingleft == True:
+    #                 self.vx = self.mx
+    #             else:
+    #                 self.vx = 0
+    #             self.rect.x = self.x
+    #             self.movebox[0] += -self.mx * self.game.dt
+    #             self.movebox[1] += -self.mx * self.game.dt
+    #         if self.rect.y <= self.movebox[2]:
+    #             if self.vy < 0:
+    #                     self.y = self.movebox[2]
+    #             self.my = self.speed
+    #             if self.goingup == True:
+    #                 self.vy = self.my
+    #             else:
+    #                 self.vy = 0
+    #             self.rect.y = self.y
+    #             self.movebox[2] += -self.my * self.game.dt
+    #             self.movebox[3] += -self.my * self.game.dt
+    #         if self.rect.y >= self.movebox[3]:
+    #             if self.vy > 0:
+    #                     self.y = self.movebox[3]
+    #             self.my = -self.speed
+    #             if self.goingdown == True:
+    #                 self.vy = self.my
+    #             else:
+    #                 self.vy = 0
+    #             self.rect.y = self.y
+    #             self.movebox[2] += -self.my * self.game.dt
+    #             self.movebox[3] += -self.my * self.game.dt
 
     #updates everything for the player(everything that gets repeated goes here)
     def update(self):
         self.get_keys()
+        #self.animate()
         self.x += self.vx * self.game.dt
         self.y += self.vy * self.game.dt
         self.rect.x = self.x
@@ -259,19 +302,21 @@ class Player(pg.sprite.Sprite):
         self.rect.y = self.y
         self.collide_with_walls('y')
         self.collide_with_group(self.game.coins,True)
-        self.movebox_collisions()
-        self.mapx += self.mx *self.game.dt
-        self.mapy += self.my *self.game.dt
+        self.collide_with_group(self.game.medkits, True)
+        #self.movebox_collisions()
+        self.mapx += -self.vx *self.game.dt
+        self.mapy += -self.vy *self.game.dt
         self.map_pos = (self.mapx,self.mapy)
-        if self.movebox[0] < self.movebox[1]:
-            self.moveboxcenterx = ((self.movebox[1] - self.movebox[0])/2) + self.movebox[0]
-        else:
-            self.moveboxcenterx = ((self.movebox[1] - self.movebox[0])/2) + self.movebox[1]
-        if self.movebox[2] < self.movebox[3]:
-            self.moveboxcentery = ((self.movebox[3] - self.movebox[2])/2) + self.movebox[2]
-        else:
-            self.moveboxcentery = ((self.movebox[3] - self.movebox[2])/2) + self.movebox[3]
-        self.moveboxcenter = (self.moveboxcenterx, self.moveboxcentery)
+        self.UI_pos = (-self.mapx,-self.mapy)
+        # if self.movebox[0] < self.movebox[1]:
+        #     self.moveboxcenterx = ((self.movebox[1] - self.movebox[0])/2) + self.movebox[0]
+        # else:
+        #     self.moveboxcenterx = ((self.movebox[1] - self.movebox[0])/2) + self.movebox[1]
+        # if self.movebox[2] < self.movebox[3]:
+        #     self.moveboxcentery = ((self.movebox[3] - self.movebox[2])/2) + self.movebox[2]
+        # else:
+        #     self.moveboxcentery = ((self.movebox[3] - self.movebox[2])/2) + self.movebox[3]
+        # self.moveboxcenter = (self.moveboxcenterx, self.moveboxcentery)
         #disables cooldowns
         if self.game.cooldown.cd < 1:
             self.cooling = False
@@ -411,6 +456,19 @@ class Coin(pg.sprite.Sprite):
         self.y = y
         self.rect.x = x * tilesize
         self.rect.y = y * tilesize
+#creates coins
+class Medkit(pg.sprite.Sprite):
+    #and here
+    def __init__(self, game, x, y):
+        self.groups = game.all_sprites, game.medkits, game.np_sprites
+        pg.sprite.Sprite.__init__(self, self.groups)
+        self.game = game
+        self.image = game.medkit_img
+        self.rect = self.image.get_rect()
+        self.x = x
+        self.y = y
+        self.rect.x = x * tilesize
+        self.rect.y = y * tilesize
 #creates powerups
 class PowerUp(pg.sprite.Sprite):
     #anddd here
@@ -455,19 +513,26 @@ class Enemy(pg.sprite.Sprite):
         self.rot = 0
         self.speed = 150
         self.hp = 3
+        self.cooldown = Timer(game)
         self.cooling = False
+        self.knockbackcooling = False
         self.imagecooling = 0
     #collides with sprites(only the sword rn)
     def collide_with_group(self, group, kill):
         hits = pg.sprite.spritecollide(self, group, kill)
         if hits:
             if str(hits[0].__class__.__name__) == "Weapon":
+                choices = (1.075,1.1,1.125)
                 self.hp -= 1
+                self.speed = -1000
                 self.cooling = True
                 self.game.cooldown.cd = 2
+                self.cooldown.cd = choices[randint(0,2)]
+                self.knockbackcooling = True
                 print("The enemy took damage")
     #moves toward the player and collides with walls deathblocks and safewalls
     def update(self):
+        self.cooldown.ticking()
         self.rot = (self.game.p1.rect.center - self.pos).angle_to(vec(1, 0))
         self.rect.center = self.pos
         self.acc = vec(self.speed, 0).rotate(-self.rot)
@@ -483,12 +548,17 @@ class Enemy(pg.sprite.Sprite):
         #these are to create i-frames
         if self.game.cooldown.cd < 1:
             self.cooling = False
+        if self.cooldown.cd < 1:
+            self.knockbackcooling = False
         if not self.cooling:
             self.collide_with_group(self.game.weapons, False)
+        if not self.knockbackcooling:
+            self.speed = 150
         #kills it
         if self.hp <= 0:
             self.kill()
             self.game.p1.moneybag += 2
+            self.game.p1.kills += 1
     #creates bosses
 class Boss(pg.sprite.Sprite):
     #and finally here
@@ -505,19 +575,27 @@ class Boss(pg.sprite.Sprite):
         self.rot = 0
         self.speed = 100
         self.hp = 30
+        self.cooldown = Timer(game)
         self.cooling = False
+        self.knockbackcooling = False
+        self.knockbacktime = 0
         self.imagecooling = 0
     #collides with sprites(only the sword rn)
     def collide_with_group(self, group, kill):
         hits = pg.sprite.spritecollide(self, group, kill)
         if hits:
             if str(hits[0].__class__.__name__) == "Weapon":
+                choices = (1.075,1.1,1.125)
                 self.hp -= 1
+                self.speed = -500
                 self.cooling = True
                 self.game.cooldown.cd = 2
+                self.cooldown.cd = choices[randint(0,2)]
+                self.knockbackcooling = True
                 print("The enemy took damage")
     #moves toward the player and collides with walls deathblocks and safewalls
     def update(self):
+        self.cooldown.ticking()
         self.rot = (self.game.p1.rect.center - self.pos).angle_to(vec(1, 0))
         self.rect.center = self.pos
         self.acc = vec(self.speed, 0).rotate(-self.rot)
@@ -533,9 +611,14 @@ class Boss(pg.sprite.Sprite):
         #these are to create i-frames
         if self.game.cooldown.cd < 1:
             self.cooling = False
+        if self.cooldown.cd < 1:
+            self.knockbackcooling = False
         if not self.cooling:
             self.collide_with_group(self.game.weapons, False)
+        if not self.knockbackcooling:
+            self.speed = 100
         #kills it
         if self.hp <= 0:
             self.kill()
             self.game.p1.moneybag += 20
+            self.game.p1.kills += 10
