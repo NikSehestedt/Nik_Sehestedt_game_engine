@@ -52,16 +52,18 @@ class Player(pg.sprite.Sprite):
         self.speed = 200
         self.pos = vec(0,0)
         self.position = vec(self.x, self.y)
-        self.sheathed = True
+        self.Psheathed = True
+        self.Ssheathed = True
+        self.health = 100
+        #sets the cooldown
         self.cooling = False
         self.damagecooling = False
         self.swordcooling = False
-        self.health = 100
-        # self.movebox = [(self.game.p1col*32) - 16, (self.game.p1col*32), (self.game.p1row*32)-16, (self.game.p1row*32)]
-        # self.moveboxcenter = ((self.game.p1col*32)-8, (self.game.p1row*32)-8)
+        #sets the position of the map
         self.map_pos = (self.x-475,self.y-354)
-        self.UI_pos = (0,0)
         self.mapx, self.mapy = self.map_pos
+        self.handsaway = False
+        self.hands = Hands(self.game, self.map_pos)
         # self.goingleft = False
         # self.goingright = False
         # self.goingup = False
@@ -225,20 +227,24 @@ class Player(pg.sprite.Sprite):
         if self.vx != 0 and self.vy != 0:
             self.vx *= 0.7071
             self.vy *= 0.7071
-        else:
-            #for movebox collisions
-            self.goingleft = False
-            self.goingright = False
-            self.goingup = False
-            self.goingdown = False
-        if self.sheathed == True:
+        if keys[pg.K_1]:
             if self.swordcooling == False:
-                if keys[pg.K_e]:
-                    self.weapon = Weapon(self.game, self.map_pos)
-                    self.sheathed = False
+                if self.Psheathed == True:
+                    self.sword = Sword(self.game, self.map_pos)
+                    self.Psheathed = False
                     #makes it so you dont accidently instantly delete the sword
                     self.swordcooling = True
                     self.game.cooldown.cd = 3
+                    print("Sword has been summoned")
+            if self.swordcooling == False:
+                if self.Psheathed == False:
+                    self.sword.kill()
+                    self.Psheathed = True
+                    #makes it so you dont accidently instantly resummon the sword
+                    self.swordcooling = True
+                    self.game.cooldown.cd = 3
+                    print("sword has been deleted")
+                    self.hands = Hands(self.game, self.map_pos)
     #makes it so the player can move the map creating the illusion of a moving camera
     # def movebox_collisions(self):
     #     if self.game.playing:
@@ -318,6 +324,14 @@ class Player(pg.sprite.Sprite):
         #     self.moveboxcentery = ((self.movebox[3] - self.movebox[2])/2) + self.movebox[3]
         # self.moveboxcenter = (self.moveboxcenterx, self.moveboxcentery)
         #disables cooldowns
+        if self.Psheathed == False:
+            self.Ssheathed = True
+            self.handsaway = True
+            self.hands.kill()
+        if self.Ssheathed == False:
+            self.Psheatehed = True
+            self.handsaway = True
+            self.hands.kill()
         if self.game.cooldown.cd < 1:
             self.cooling = False
             self.damagecooling = False
@@ -339,69 +353,68 @@ class Player(pg.sprite.Sprite):
        
 #creates the sword
 class Weapon(pg.sprite.Sprite):
-    def __init__(self,game,map_pos):
-        self.groups = game.all_sprites, game.weapons
+    def __init__(self,game, pos, img):
         pg.sprite.Sprite.__init__(self, self.groups)
         self.game = game
-        self.originalimage = game.sword_img
-        self.image = game.sword_img
+        self.originalimage = img
+        self.image = img
         self.rect = self.image.get_rect()
-        self.x, self.y = map_pos
+        self.x, self.y = pos
 
-    def point_atmouse(self):
+    def point_atmouse(self, distance):
         # Get mouse position
         mousemap = pg.mouse.get_pos()
         p1screen = self.game.map_to_screen()
         # Calculate angle between player and mouse
         dx = mousemap[0] - p1screen[0]
         dy = mousemap[1] - p1screen[1]
-        angle = atan2(dy, dx)
-        if angle < 0:
-            angle += 2 * pi
+        self.angle = atan2(dy, dx)
+        if self.angle < 0:
+            self.angle += 2 * pi
         # Rotate the sword image based on the angle
-        self.image = pg.transform.rotate(self.originalimage, -degrees(angle)-90)
+        self.image = pg.transform.rotate(self.originalimage, -degrees(self.angle)-90)
         # Calculate sword position relative to the player
-        self.xrel = cos(angle) * tilesize
-        self.yrel = sin(angle) * tilesize
+        self.xrel = (cos(self.angle)+distance) * tilesize 
+        self.yrel = (sin(self.angle)+distance) * tilesize
         # Set sword position
-        self.x = self.game.p1.x + self.xrel
-        self.y = self.game.p1.y + self.yrel
+        self.x = (self.game.p1.x + self.xrel) - 5
+        self.y = (self.game.p1.y + self.yrel) - 5
 
+class Sword(Weapon):
+    def __init__(self, game, map_pos):
+        self.groups = game.all_sprites, game.weapons
+        self.game = game
+        super().__init__(self.game, map_pos, self.game.sword_img)
     #updates the sword
     def update(self):
-        self.point_atmouse()
+        super().point_atmouse(0)
         self.rect.x = self.x
         self.rect.y = self.y
-        keys = pg.key.get_pressed()
-        if self.game.p1.sheathed == False:
-            # if keys[pg.K_a] or keys[pg.K_LEFT]:
-            #     self.rect.x = self.game.p1.rect.x
-            #     self.rect.y = self.game.p1.rect.y-32
-            # #     self.rect.x = self.game.p1.rect.x-32
-            # #     self.rect.y = self.game.p1.rect.y
-            # #     #self.image = self.game.swordleft_img
-            # if keys[pg.K_d] or keys[pg.K_RIGHT]:
-            #     self.rect.x = self.game.p1.rect.x
-            #     self.rect.y = self.game.p1.rect.y-32
-            # #     self.rect.x = self.game.p1.rect.x+32
-            # #     self.rect.y = self.game.p1.rect.y
-            # #     #self.image = self.game.swordright_img
-            # if keys[pg.K_w] or keys[pg.K_UP]:
-            #     self.rect.x = self.game.p1.rect.x
-            #     self.rect.y = self.game.p1.rect.y-32
-            # #     #self.image = self.game.sword_img
-            # if keys[pg.K_s] or keys[pg.K_DOWN]:
-            #     self.rect.x = self.game.p1.rect.x
-            #     self.rect.y = self.game.p1.rect.y-32
-            # #     self.rect.x = self.game.p1.rect.x
-            # #     self.rect.y = self.game.p1.rect.y+32
-                #self.image = self.game.sworddown_img
-            if self.game.p1.swordcooling == False:
-                if keys[pg.K_e]:
-                    self.kill()
-                    self.game.p1.sheathed = True
-                    self.game.p1.swordcooling = True
-                    self.game.cooldown.cd = 3
+
+class Hands(Weapon):
+    def __init__(self, game, map_pos):
+        self.groups = game.all_sprites, game.weapons
+        self.game = game
+        super().__init__(self.game, map_pos, self.game.hands_img)
+        self.forward = 0
+        self.holding = False
+    def pickup(self, obj):
+        obj.image = pg.transform.rotate(obj.originalimage, -degrees(self.angle)-90)
+        obj.xrel = (cos(self.angle)) * tilesize 
+        obj.yrel = (sin(self.angle)) * tilesize
+        obj.x = (self.x + obj.xrel) - 5
+        obj.y = (self.y + obj.yrel) - 5
+    #updates the hands
+    def update(self):
+        super().point_atmouse()
+        self.rect.x = self.x
+        self.rect.y = self.y
+        for event in pg.event.get():
+            if event.type == pg.MOUSEBUTTONDOWN and event.button == 1:  # Left click
+                if self.holding == False:  # If hands are empty
+                    
+
+        
 #creates walls
 class Wall(pg.sprite.Sprite):
     #everything in init follows the same structure as Player
@@ -521,7 +534,7 @@ class Enemy(pg.sprite.Sprite):
     def collide_with_group(self, group, kill):
         hits = pg.sprite.spritecollide(self, group, kill)
         if hits:
-            if str(hits[0].__class__.__name__) == "Weapon":
+            if str(hits[0].__class__.__name__) == "Sword":
                 choices = (1.075,1.1,1.125)
                 self.hp -= 1
                 self.speed = -1000
@@ -530,9 +543,20 @@ class Enemy(pg.sprite.Sprite):
                 self.cooldown.cd = choices[randint(0,2)]
                 self.knockbackcooling = True
                 print("The enemy took damage")
+            if str(hits[0].__class__.__name__) == "Hands":
+                choices = (1.075,1.1,1.125)
+                self.hp -= 1
+                self.speed = -500
+                self.cooling = True
+                self.game.cooldown.cd = 2
+                self.cooldown.cd = choices[randint(0,2)]
+                self.knockbackcooling = True
+                print("The enemy took damage")
     #moves toward the player and collides with walls deathblocks and safewalls
     def update(self):
         self.cooldown.ticking()
+        #if abs(self.game.p1.rect.x - self.x)*32 < 5:
+        #    if abs(self.game.p1.rect.y - self.y)*32 < 5:
         self.rot = (self.game.p1.rect.center - self.pos).angle_to(vec(1, 0))
         self.rect.center = self.pos
         self.acc = vec(self.speed, 0).rotate(-self.rot)
@@ -584,7 +608,16 @@ class Boss(pg.sprite.Sprite):
     def collide_with_group(self, group, kill):
         hits = pg.sprite.spritecollide(self, group, kill)
         if hits:
-            if str(hits[0].__class__.__name__) == "Weapon":
+            if str(hits[0].__class__.__name__) == "Sword":
+                choices = (1.075,1.1,1.125)
+                self.hp -= 1
+                self.speed = -500
+                self.cooling = True
+                self.game.cooldown.cd = 2
+                self.cooldown.cd = choices[randint(0,2)]
+                self.knockbackcooling = True
+                print("The enemy took damage")
+            if str(hits[0].__class__.__name__) == "Hands":
                 choices = (1.075,1.1,1.125)
                 self.hp -= 1
                 self.speed = -500

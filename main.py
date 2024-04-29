@@ -1,6 +1,13 @@
 #this file was created by Nik Sehestedt
 #period 4 is the best
 
+'''
+Beta goal:
+better images
+
+Gameplay goal:
+Better combat(more weapons, more enemies, final boss)
+'''
 #imports the libraries
 import pygame
 from settings import *
@@ -48,8 +55,8 @@ class Game:
         game_folder = path.dirname(__file__)
         img_folder = path.join(game_folder, 'images')
         #all of the textures are set here
-        self.player_img = pygame.image.load(path.join(img_folder, 'Mario.png')).convert_alpha()
-        self.sword_img = pygame.image.load(path.join(img_folder, 'Sword.png')).convert_alpha()
+        self.player_img = pygame.image.load(path.join(img_folder, 'Playernew.png')).convert_alpha()
+        self.sword_img = pygame.image.load(path.join(img_folder, 'Swordnew.png')).convert_alpha()
         self.invcplayer_img = pygame.image.load(path.join(img_folder, 'GoldMario.png')).convert_alpha()
         self.deathblock_img = pygame.image.load(path.join(img_folder, 'Lava.png')).convert_alpha()
         self.enemy_img = pygame.image.load(path.join(img_folder, 'enemy.png')).convert_alpha()
@@ -59,6 +66,7 @@ class Game:
         self.safe_img = pygame.image.load(path.join(img_folder, 'Safezone.png')).convert_alpha()
         self.boss_img = pygame.image.load(path.join(img_folder, 'boss.png')).convert_alpha()
         self.medkit_img = pygame.image.load(path.join(img_folder, 'medkit.png')).convert_alpha()
+        self.hands_img = pygame.image.load(path.join(img_folder, 'Hands.png')).convert_alpha()
         self.map_data = []
         '''
         The with statement is a context manager in Python. 
