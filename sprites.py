@@ -60,26 +60,12 @@ class Player(pg.sprite.Sprite):
         self.damagecooling = False
         self.swordcooling = False
         #sets the position of the map
-        self.map_pos = (self.x-475,self.y-354)
+        self.map_pos = (width/2 - 32 - self.x, height/2 - 32 - self.y)
         self.mapx, self.mapy = self.map_pos
         self.handsaway = False
         self.hands = Hands(self.game, self.map_pos)
-        # self.goingleft = False
-        # self.goingright = False
-        # self.goingup = False
-        # self.goingdown = False
-        # self.jumping = False
-        # self.walking = False
-        # self.current_frame = 0
-        # self.last_update = 0
     #kills the player
     def death(self):
-        # self.rect.x = self.game.p1col*tilesize
-        # self.rect.y = self.game.p1row*tilesize
-        # self.x = self.game.p1col*tilesize
-        # self.y = self.game.p1row*tilesize
-        # self.speed = 300
-        # self.health = 100
         self.game.playing = False
         print("You Died")
 
@@ -112,9 +98,9 @@ class Player(pg.sprite.Sprite):
     #         self.rect = self.image.get_rect()
     #         self.rect.bottom = bottom
     #collision for walls
-    def collide_with_walls(self, dir):
+    def collide_with_walls(self, group, dir):
         if dir == "x":
-            hits = pg.sprite.spritecollide(self, self.game.walls, False)
+            hits = pg.sprite.spritecollide(self, group, False)
             if hits:
                 if self.vx > 0:
                     self.x = hits[0].rect.left - self.rect.width
@@ -123,7 +109,7 @@ class Player(pg.sprite.Sprite):
                 self.vx = 0
                 self.rect.x = self.x
         if dir == 'y':
-            hits = pg.sprite.spritecollide(self, self.game.walls, False)
+            hits = pg.sprite.spritecollide(self, group, False)
             if hits:
                 if self.vy > 0:
                     self.y = hits[0].rect.top - self.rect.height
@@ -245,57 +231,7 @@ class Player(pg.sprite.Sprite):
                     self.game.cooldown.cd = 3
                     print("sword has been deleted")
                     self.hands = Hands(self.game, self.map_pos)
-    #makes it so the player can move the map creating the illusion of a moving camera
-    # def movebox_collisions(self):
-    #     if self.game.playing:
-    #         self.mx, self.my = 0,0
-    #         if self.mx != 0 and self.my != 0:
-    #             self.mx *= 0.7071
-    #             self.my *= 0.7071
-    #         if self.rect.x <= self.movebox[0]:
-    #             if self.vx < 0:
-    #                     self.x = self.movebox[0]
-    #             self.mx = self.speed
-    #             if self.goingright == True:
-    #                 self.vx = self.mx
-    #             else:
-    #                 self.vx = 0
-    #             self.rect.x = self.x
-    #             self.movebox[0] += -self.mx * self.game.dt
-    #             self.movebox[1] += -self.mx * self.game.dt
-    #         if self.rect.x >= self.movebox[1]:
-    #             if self.vx > 0:
-    #                     self.x = self.movebox[1]
-    #             self.mx = -self.speed
-    #             if self.goingleft == True:
-    #                 self.vx = self.mx
-    #             else:
-    #                 self.vx = 0
-    #             self.rect.x = self.x
-    #             self.movebox[0] += -self.mx * self.game.dt
-    #             self.movebox[1] += -self.mx * self.game.dt
-    #         if self.rect.y <= self.movebox[2]:
-    #             if self.vy < 0:
-    #                     self.y = self.movebox[2]
-    #             self.my = self.speed
-    #             if self.goingup == True:
-    #                 self.vy = self.my
-    #             else:
-    #                 self.vy = 0
-    #             self.rect.y = self.y
-    #             self.movebox[2] += -self.my * self.game.dt
-    #             self.movebox[3] += -self.my * self.game.dt
-    #         if self.rect.y >= self.movebox[3]:
-    #             if self.vy > 0:
-    #                     self.y = self.movebox[3]
-    #             self.my = -self.speed
-    #             if self.goingdown == True:
-    #                 self.vy = self.my
-    #             else:
-    #                 self.vy = 0
-    #             self.rect.y = self.y
-    #             self.movebox[2] += -self.my * self.game.dt
-    #             self.movebox[3] += -self.my * self.game.dt
+    
 
     #updates everything for the player(everything that gets repeated goes here)
     def update(self):
@@ -304,33 +240,24 @@ class Player(pg.sprite.Sprite):
         self.x += self.vx * self.game.dt
         self.y += self.vy * self.game.dt
         self.rect.x = self.x
-        self.collide_with_walls('x')
+        self.collide_with_walls(self.game.walls, 'x')
         self.rect.y = self.y
-        self.collide_with_walls('y')
+        self.collide_with_walls(self.game.walls, 'y')   
         self.collide_with_group(self.game.coins,True)
         self.collide_with_group(self.game.medkits, True)
-        #self.movebox_collisions()
         self.mapx += -self.vx *self.game.dt
         self.mapy += -self.vy *self.game.dt
         self.map_pos = (self.mapx,self.mapy)
-        self.UI_pos = (-self.mapx,-self.mapy)
-        # if self.movebox[0] < self.movebox[1]:
-        #     self.moveboxcenterx = ((self.movebox[1] - self.movebox[0])/2) + self.movebox[0]
-        # else:
-        #     self.moveboxcenterx = ((self.movebox[1] - self.movebox[0])/2) + self.movebox[1]
-        # if self.movebox[2] < self.movebox[3]:
-        #     self.moveboxcentery = ((self.movebox[3] - self.movebox[2])/2) + self.movebox[2]
-        # else:
-        #     self.moveboxcentery = ((self.movebox[3] - self.movebox[2])/2) + self.movebox[3]
-        # self.moveboxcenter = (self.moveboxcenterx, self.moveboxcentery)
         #disables cooldowns
         if self.Psheathed == False:
             self.Ssheathed = True
             self.handsaway = True
+            self.hands.pickup(None)
             self.hands.kill()
         if self.Ssheathed == False:
             self.Psheatehed = True
             self.handsaway = True
+            self.hands.pickup(None)
             self.hands.kill()
         if self.game.cooldown.cd < 1:
             self.cooling = False
@@ -339,6 +266,7 @@ class Player(pg.sprite.Sprite):
             self.speed = 300
             self.image = self.game.player_img
             self.effect = ""
+           
         #lets us pick up powerups again
         if not self.cooling:
             self.collide_with_group(self.game.power_ups, True)
@@ -361,7 +289,7 @@ class Weapon(pg.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.x, self.y = pos
 
-    def point_atmouse(self, distance):
+    def point_atmouse(self, distance, offset):
         # Get mouse position
         mousemap = pg.mouse.get_pos()
         p1screen = self.game.map_to_screen()
@@ -374,11 +302,11 @@ class Weapon(pg.sprite.Sprite):
         # Rotate the sword image based on the angle
         self.image = pg.transform.rotate(self.originalimage, -degrees(self.angle)-90)
         # Calculate sword position relative to the player
-        self.xrel = (cos(self.angle)+distance) * tilesize 
-        self.yrel = (sin(self.angle)+distance) * tilesize
+        self.xrel = (cos(self.angle)) * distance
+        self.yrel = (sin(self.angle)) * distance
         # Set sword position
-        self.x = (self.game.p1.x + self.xrel) - 5
-        self.y = (self.game.p1.y + self.yrel) - 5
+        self.x = (self.game.p1.x + self.xrel) + offset
+        self.y = (self.game.p1.y + self.yrel) + offset
 
 class Sword(Weapon):
     def __init__(self, game, map_pos):
@@ -387,7 +315,7 @@ class Sword(Weapon):
         super().__init__(self.game, map_pos, self.game.sword_img)
     #updates the sword
     def update(self):
-        super().point_atmouse(0)
+        super().point_atmouse(32, -5)
         self.rect.x = self.x
         self.rect.y = self.y
 
@@ -397,23 +325,43 @@ class Hands(Weapon):
         self.game = game
         super().__init__(self.game, map_pos, self.game.hands_img)
         self.forward = 0
+        self.pickupcooling = False
         self.holding = False
+        self.grabbed_item = None
     def pickup(self, obj):
-        obj.image = pg.transform.rotate(obj.originalimage, -degrees(self.angle)-90)
-        obj.xrel = (cos(self.angle)) * tilesize 
-        obj.yrel = (sin(self.angle)) * tilesize
-        obj.x = (self.x + obj.xrel) - 5
-        obj.y = (self.y + obj.yrel) - 5
+        if self.grabbed_item:  # If already holding an item, release it
+            self.grabbed_item.grabbed = False
+            self.grabbed_item = None
+            self.holding = False
+        if obj:
+            self.obj = obj
+            self.obj.image = pg.transform.rotate(obj.originalimage, -degrees(self.angle)-90)
+            self.obj.x = self.x - (cos(self.angle))
+            self.obj.y = self.y - (sin(self.angle))
+            self.obj.grabbed = True
+            self.holding = True
+            self.grabbed_item = obj
     #updates the hands
     def update(self):
-        super().point_atmouse()
+        super().point_atmouse(22, 5)
+        if self.game.cooldown.cd < 1:
+            self.pickupcooling = False
         self.rect.x = self.x
         self.rect.y = self.y
-        for event in pg.event.get():
-            if event.type == pg.MOUSEBUTTONDOWN and event.button == 1:  # Left click
-                if self.holding == False:  # If hands are empty
-                    
-
+        mouse_click = pg.mouse.get_pressed()[0]
+        if mouse_click == 1:  # Left click
+            if self.pickupcooling == False:
+                if not self.holding:  # If hands are not holding an item
+                    for item in self.game.picksprites:
+                        if pg.sprite.collide_rect(self, item):
+                            self.pickup(item)
+                            self.pickupcooling = True 
+                            self.game.cooldown.cd = 1.3
+                            break
+                elif self.grabbed_item:  # If hands are holding an item
+                    self.pickup(None)  # Release the item
+                    self.game.cooldown.cd = 1.3
+                    self.pickupcooling = True
         
 #creates walls
 class Wall(pg.sprite.Sprite):
@@ -460,41 +408,86 @@ class Deathblock(pg.sprite.Sprite):
 class Coin(pg.sprite.Sprite):
     #and here
     def __init__(self, game, x, y):
-        self.groups = game.all_sprites, game.coins, game.np_sprites
+        self.groups = game.all_sprites, game.coins, game.picksprites
         pg.sprite.Sprite.__init__(self, self.groups)
         self.game = game
-        self.image = game.coin_img
+        self.originalimage = game.coin_img
+        self.image = self.originalimage
         self.rect = self.image.get_rect()
         self.x = x
         self.y = y
         self.rect.x = x * tilesize
         self.rect.y = y * tilesize
+        self.grabbed = False
+    def update(self):
+        if self.grabbed:
+            # Apply the effect of being grabbed
+            self.image = pg.transform.rotate(self.originalimage, -degrees(self.game.p1.hands.angle)-90)
+            self.rect.x = self.game.p1.hands.x + cos(self.game.p1.hands.angle) * 32
+            self.rect.y = self.game.p1.hands.y + sin(self.game.p1.hands.angle) * 32
 #creates coins
 class Medkit(pg.sprite.Sprite):
     #and here
     def __init__(self, game, x, y):
-        self.groups = game.all_sprites, game.medkits, game.np_sprites
+        self.groups = game.all_sprites, game.medkits, game.picksprites
         pg.sprite.Sprite.__init__(self, self.groups)
         self.game = game
-        self.image = game.medkit_img
+        self.originalimage = game.medkit_img
+        self.image = self.originalimage
         self.rect = self.image.get_rect()
         self.x = x
         self.y = y
         self.rect.x = x * tilesize
         self.rect.y = y * tilesize
+        self.grabbed = False
+    def update(self):
+        if self.grabbed:
+            # Apply the effect of being grabbed
+            self.image = pg.transform.rotate(self.originalimage, -degrees(self.game.p1.hands.angle)-90)
+            self.rect.x = self.game.p1.hands.x + cos(self.game.p1.hands.angle) * 32
+            self.rect.y = self.game.p1.hands.y + sin(self.game.p1.hands.angle) * 32
 #creates powerups
 class PowerUp(pg.sprite.Sprite):
     #anddd here
     def __init__(self, game, x, y):
-        self.groups = game.all_sprites, game.power_ups, game.np_sprites
+        self.groups = game.all_sprites, game.power_ups, game.picksprites
         pg.sprite.Sprite.__init__(self, self.groups)
         self.game = game
-        self.image = game.powerups_img
+        self.originalimage = game.powerups_img
+        self.image = self.originalimage
         self.rect = self.image.get_rect()
         self.x = x
         self.y = y
         self.rect.x = x * tilesize
         self.rect.y = y * tilesize
+        self.grabbed = False
+    def update(self):
+        if self.grabbed:
+            # Apply the effect of being grabbed
+            self.image = pg.transform.rotate(self.originalimage, -degrees(self.game.p1.hands.angle)-90)
+            self.rect.x = self.game.p1.hands.x + cos(self.game.p1.hands.angle) * 32
+            self.rect.y = self.game.p1.hands.y + sin(self.game.p1.hands.angle) * 32
+#creates boxes
+class Box(pg.sprite.Sprite):
+    #here too
+    def __init__(self, game, x, y):
+        self.groups = game.all_sprites, game.boxes, game.picksprites
+        pg.sprite.Sprite.__init__(self, self.groups)
+        self.game = game
+        self.originalimage = game.box_img
+        self.image = self.originalimage
+        self.rect = self.image.get_rect()
+        self.x = x
+        self.y = y
+        self.rect.x = x * tilesize
+        self.rect.y = y * tilesize
+        self.grabbed = False
+    def update(self):
+        if self.grabbed:
+            # Apply the effect of being grabbed
+            self.image = pg.transform.rotate(self.originalimage, -degrees(self.game.p1.hands.angle)-90)
+            self.rect.x = self.game.p1.hands.x + cos(self.game.p1.hands.angle) * 32
+            self.rect.y = self.game.p1.hands.y + sin(self.game.p1.hands.angle) * 32
 #creates safespaces(currently enemies can clip so not really safe)
 class Safespace(pg.sprite.Sprite):
     #here too
@@ -569,6 +562,8 @@ class Enemy(pg.sprite.Sprite):
         collide_with_walls(self, self.game.deathblocks, 'y')
         collide_with_walls(self, self.game.safewalls, 'x')
         collide_with_walls(self, self.game.safewalls, 'y')
+        collide_with_walls(self, self.game.boxes, 'x')
+        collide_with_walls(self, self.game.boxes, 'y')
         #these are to create i-frames
         if self.game.cooldown.cd < 1:
             self.cooling = False
@@ -641,6 +636,9 @@ class Boss(pg.sprite.Sprite):
         collide_with_walls(self, self.game.deathblocks, 'y')
         collide_with_walls(self, self.game.safewalls, 'x')
         collide_with_walls(self, self.game.safewalls, 'y')
+        collide_with_walls(self, self.game.boxes, 'x')
+        collide_with_walls(self, self.game.boxes, 'y')
+        
         #these are to create i-frames
         if self.game.cooldown.cd < 1:
             self.cooling = False

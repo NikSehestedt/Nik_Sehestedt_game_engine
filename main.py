@@ -57,7 +57,7 @@ class Game:
         #all of the textures are set here
         self.player_img = pygame.image.load(path.join(img_folder, 'Playernew.png')).convert_alpha()
         self.sword_img = pygame.image.load(path.join(img_folder, 'Swordnew.png')).convert_alpha()
-        self.invcplayer_img = pygame.image.load(path.join(img_folder, 'GoldMario.png')).convert_alpha()
+        self.invcplayer_img = pygame.image.load(path.join(img_folder, 'invc.png')).convert_alpha()
         self.deathblock_img = pygame.image.load(path.join(img_folder, 'Lava.png')).convert_alpha()
         self.enemy_img = pygame.image.load(path.join(img_folder, 'enemy.png')).convert_alpha()
         #self.wall_img = pygame.image.load(path.join(img_folder, 'Johnson.png')).convert_alpha()
@@ -67,6 +67,7 @@ class Game:
         self.boss_img = pygame.image.load(path.join(img_folder, 'boss.png')).convert_alpha()
         self.medkit_img = pygame.image.load(path.join(img_folder, 'medkit.png')).convert_alpha()
         self.hands_img = pygame.image.load(path.join(img_folder, 'Hands.png')).convert_alpha()
+        self.box_img = pygame.image.load(path.join(img_folder, 'Box.png')).convert_alpha()
         self.map_data = []
         '''
         The with statement is a context manager in Python. 
@@ -95,8 +96,12 @@ class Game:
         self.bosses = pygame.sprite.Group()
         self.secrets = pygame.sprite.Group()
         self.medkits = pygame.sprite.Group()
+        self.picksprites = pygame.sprite.Group()
+        self.boxes = pygame.sprite.Group()
         #makes the map
-        self.map = pygame.Surface((len(self.map_data[0])*32,len(self.map_data)*32))
+        self.mapx = len(self.map_data[0])*32
+        self.mapy = len(self.map_data)*32
+        self.map = pygame.Surface(((len(self.map_data[0])-1)*32,len(self.map_data)*32))
         for row, tiles in enumerate(self.map_data):
             for col, tile in enumerate(tiles):
                 #makes walls on the screen
@@ -132,9 +137,9 @@ class Game:
                 #makes medkits
                 if tile == 'H':
                     Medkit(self, col, row)
+                if tile == 'O':
+                    Box(self,col,row)
         #makes the UI
-        self.UI = pygame.Surface((width, height), pygame.SRCALPHA)
-        self.UI.convert_alpha()
 
     
 
@@ -197,8 +202,6 @@ class Game:
         self.map.fill(BGCOLOR)
         #draws the spriteson the map
         self.all_sprites.draw(self.map)
-        #puts UI on the map
-        self.screen.blit(self.UI, (0,0))
         #puts the money count on the UI
         self.draw_text(self.screen, "Kills: "+str(self.p1.kills), 64, WHITE, 25, 1)
         self.draw_text(self.screen, str(self.p1.moneybag), 64, WHITE, 1,1)
