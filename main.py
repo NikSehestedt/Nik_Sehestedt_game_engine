@@ -3,10 +3,9 @@
 
 '''
 Beta goal:
-better images
-
+Pick stuff up
 Gameplay goal:
-Better combat(more weapons, more enemies, final boss)
+better combat system, knockback and all
 '''
 #imports the libraries
 import pygame
