@@ -245,9 +245,10 @@ class Player(pg.sprite.Sprite):
         self.collide_with_walls(self.game.walls, 'y')   
         self.collide_with_group(self.game.coins,True)
         self.collide_with_group(self.game.medkits, True)
-        self.mapx += -self.vx *self.game.dt
-        self.mapy += -self.vy *self.game.dt
-        self.map_pos = (self.mapx,self.mapy)
+        #self.mapx += -self.vx *self.game.dt
+        #self.mapy += -self.vy *self.game.dt
+        #self.map_pos = (self.mapx,self.mapy)
+        self.map_pos = (width/2 - 32 - self.x, height/2 - 32 - self.y)
         #disables cooldowns
         if self.Psheathed == False:
             self.Ssheathed = True
@@ -288,7 +289,7 @@ class Weapon(pg.sprite.Sprite):
         self.image = img
         self.rect = self.image.get_rect()
         self.x, self.y = pos
-
+    #modified from chatgpt
     def point_atmouse(self, distance, offset):
         # Get mouse position
         mousemap = pg.mouse.get_pos()
@@ -304,9 +305,19 @@ class Weapon(pg.sprite.Sprite):
         # Calculate sword position relative to the player
         self.xrel = (cos(self.angle)) * distance
         self.yrel = (sin(self.angle)) * distance
+        # if self.angle >= pi / 2 and self.angle < pi:
+        #     # Second quadrant
+        #     self.xrel = abs(self.xrel)
+        # elif self.angle >= pi and self.angle < pi * 3 / 2:
+        #     # Third quadrant
+        #     self.xrel = abs(self.xrel)
+        #     self.yrel = -abs(self.yrel)
+        # else:
+        #     # Fourth quadrant
+        #     self.yrel = -abs(self.yrel)
         # Set sword position
-        self.x = (self.game.p1.x + self.xrel) + offset
-        self.y = (self.game.p1.y + self.yrel) + offset
+        self.x = ((self.game.p1.rect.x) + self.xrel) + offset
+        self.y = ((self.game.p1.rect.y) + self.yrel) + offset
 
 class Sword(Weapon):
     def __init__(self, game, map_pos):
@@ -329,25 +340,24 @@ class Hands(Weapon):
         self.holding = False
         self.grabbed_item = None
     def pickup(self, obj):
-        if self.grabbed_item:  # If already holding an item, release it
+        #if holding an item
+        if self.grabbed_item: 
             self.grabbed_item.grabbed = False
             self.grabbed_item = None
             self.holding = False
         if obj:
             self.obj = obj
-            self.obj.image = pg.transform.rotate(obj.originalimage, -degrees(self.angle)-90)
-            self.obj.x = self.x - (cos(self.angle))
-            self.obj.y = self.y - (sin(self.angle))
             self.obj.grabbed = True
             self.holding = True
             self.grabbed_item = obj
     #updates the hands
     def update(self):
-        super().point_atmouse(22, 5)
+        super().point_atmouse(27, 0)
         if self.game.cooldown.cd < 1:
             self.pickupcooling = False
         self.rect.x = self.x
         self.rect.y = self.y
+        #modified from chatgpt
         mouse_click = pg.mouse.get_pressed()[0]
         if mouse_click == 1:  # Left click
             if self.pickupcooling == False:
@@ -486,8 +496,8 @@ class Box(pg.sprite.Sprite):
         if self.grabbed:
             # Apply the effect of being grabbed
             self.image = pg.transform.rotate(self.originalimage, -degrees(self.game.p1.hands.angle)-90)
-            self.rect.x = self.game.p1.hands.x + cos(self.game.p1.hands.angle) * 32
-            self.rect.y = self.game.p1.hands.y + sin(self.game.p1.hands.angle) * 32
+            self.rect.x = self.game.p1.hands.x + cos(self.game.p1.hands.angle) * 13
+            self.rect.y = self.game.p1.hands.y + sin(self.game.p1.hands.angle) * 13
 #creates safespaces(currently enemies can clip so not really safe)
 class Safespace(pg.sprite.Sprite):
     #here too
