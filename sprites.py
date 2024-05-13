@@ -335,10 +335,20 @@ class Hands(Weapon):
         self.groups = game.all_sprites, game.weapons
         self.game = game
         super().__init__(self.game, map_pos, self.game.hands_img)
-        self.forward = 0
         self.pickupcooling = False
         self.holding = False
         self.grabbed_item = None
+        self.spinning = False
+        self.spin_acceleration = 0.001
+        self.max_spin_speed = 2
+        self.spincooling = False
+        self.spacedown = False
+        self.spin_speed = 0
+        self.angular_velocity = 0  # Variable to track the angular velocity of the rotation
+        self.previous_angle = 0
+        self.throwing = False  # Flag to track if the item is being thrown
+        self.throw_speed = 0  # Speed of the throw
+        self.throw_decceleration = 0.05  # decceleration of the throw
     def pickup(self, obj):
         #if holding an item
         if self.grabbed_item: 
@@ -348,16 +358,47 @@ class Hands(Weapon):
         if obj:
             self.obj = obj
             self.obj.grabbed = True
+            self.obj.spinning = False
+            self.obj.thrown = False
             self.holding = True
             self.grabbed_item = obj
+        
+    def spin(self):
+        self.spinning = True
+        self.spin_speed = 0.2  # Initial rotation speed
+        self.obj.spinning = True
+    def release(self):
+        if self.spinning:
+            self.throw_speed = self.spin_speed  # Set initial throw speed
+            self.obj.vx = self.obj.svx
+            self.obj.vy = self.obj.svy
+            self.obj.spinning = False
+            self.obj.thrown = True
+            self.obj.grabbed = False
+            self.obj.velocitychange = True
+            self.grabbed_item.grabbed = False
+            self.grabbed_item = None
+            self.holding = False
+            self.throwing = True
+            self.spinning = False
+         
+
     #updates the hands
     def update(self):
-        super().point_atmouse(27, 0)
-        if self.game.cooldown.cd < 1:
-            self.pickupcooling = False
-        self.rect.x = self.x
-        self.rect.y = self.y
         #modified from chatgpt
+        if not self.spinning:
+            super().point_atmouse(27, 0)
+        current_angle = degrees(self.angle)
+        keys = pg.key.get_pressed()
+        if keys[pg.K_SPACE]:
+            self.spacedown = True
+            if self.holding:  # Spin with item if spacebar is pressed while holding it
+                if not self.spinning:
+                    self.spin()
+        else:
+            self.spacedown = False
+            if self.spinning:  # Release item if spacebar is released while holding it
+                self.release()
         mouse_click = pg.mouse.get_pressed()[0]
         if mouse_click == 1:  # Left click
             if self.pickupcooling == False:
@@ -372,7 +413,23 @@ class Hands(Weapon):
                     self.pickup(None)  # Release the item
                     self.game.cooldown.cd = 1.3
                     self.pickupcooling = True
-        
+        if self.spinning:
+            self.spin_speed += self.spin_acceleration  # Increase spin speed
+            if self.spin_speed > self.max_spin_speed:
+                self.spin_speed = self.max_spin_speed  # Cap spin speed
+            self.angle += self.spin_speed  # Update player's angle
+            self.x = ((self.game.p1.rect.x) + (cos(self.angle) * 27))
+            self.y = ((self.game.p1.rect.y) + (sin(self.angle) * 27))
+            self.image = pg.transform.rotate(self.originalimage, -degrees(self.angle)-90)
+        self.rect.x = self.x
+        self.rect.y = self.y
+        if self.game.cooldown.cd < 1:
+            self.pickupcooling = False
+        # Calculate the angular velocity
+        self.angular_velocity = current_angle - self.previous_angle
+        # Store the current angle for the next update cycle
+        self.previous_angle = current_angle
+
 #creates walls
 class Wall(pg.sprite.Sprite):
     #everything in init follows the same structure as Player
@@ -491,13 +548,62 @@ class Box(pg.sprite.Sprite):
         self.y = y
         self.rect.x = x * tilesize
         self.rect.y = y * tilesize
+        self.vx, self.vy = 0,0
         self.grabbed = False
+        self.thrown = False
+        self.decelerationfactor = 0.01
+        self.angle = 0
+        self.spinning = False
+        self.velocitychange = False
+        self.movement = 0
+        self.px =0
+        self.py =0
     def update(self):
         if self.grabbed:
             # Apply the effect of being grabbed
             self.image = pg.transform.rotate(self.originalimage, -degrees(self.game.p1.hands.angle)-90)
             self.rect.x = self.game.p1.hands.x + cos(self.game.p1.hands.angle) * 13
             self.rect.y = self.game.p1.hands.y + sin(self.game.p1.hands.angle) * 13
+        if self.spinning:
+            self.svx = self.x - self.px
+            self.svy = self.y - self.py
+            self.px = self.x
+            self.py = self.y
+        if self.thrown:
+            self.timesincethrow = floor((pg.time.get_ticks())/100)
+            if self.velocitychange:
+                if self.vx == abs(self.vx):
+                    self.vx =  self.svx* (1-(self.decelerationfactor*self.timesincethrow))
+                if self.vx == -abs(self.vx):
+                    self.vx =  self.svx* (1+(self.decelerationfactor*self.timesincethrow))
+                if self.vy == abs(self.vy):
+                    self.vy =  self.svy* (1-(self.decelerationfactor*self.timesincethrow))
+                if self.vx == -abs(self.vy):
+                    self.vy =  self.svy* (1+(self.decelerationfactor*self.timesincethrow))
+            self.x += self.vx *self.game.dt
+            self.y += self.vy *self.game.dt
+            self.rect.x = self.x
+            self.rect.y = self.y
+            #if self.vx == -abs(self.vx) and self.vy == -abs(self.vy):
+            #    self.movement = abs(self.vx) - abs(self.vy)
+            #if self.vx == abs(self.vx) and self.vy == abs(self.vy):
+            self.movement = self.vx + self.vy
+            #if self.vx == -abs(self.vx) and self.vy == abs(self.vy):
+
+            self.anglechange = 0.2 * (1 - (self.decelerationfactor*(self.timesincethrow)))
+            if self.movement < 0.00005:
+                self.anglechange = 0
+                self.vx = 0
+                self.vy = 0
+                self.velocitychange = False
+                self.thrown = False
+            self.angle += self.anglechange
+            self.image = pg.transform.rotate(self.originalimage, -degrees(self.angle)-90)
+            print (self.vx)
+            print (self.vy)
+        if not self.thrown:
+            self.timesincethrow = 0
+
 #creates safespaces(currently enemies can clip so not really safe)
 class Safespace(pg.sprite.Sprite):
     #here too

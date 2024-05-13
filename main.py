@@ -167,16 +167,7 @@ class Game:
     def update(self):
         self.all_sprites.update()
         self.cooldown.ticking()
-        #self.p1.update()
-        #movementcooldown = self.cooldown.countdown(0.1)
-        #if movementcooldown == 0:
-            #self.mobs.update()
-    # def screen_to_map(self):
-    #     mouse_pos = pg.mouse.get_pos()
-    #     # Adjust coordinates by the player's position on the map
-    #     self.mousex = mouse_pos[0] + self.p1.map_pos[0]
-    #     self.mousey = mouse_pos[1] + self.p1.map_pos[1] 
-    #     return self.mousex, self.mousey
+       
     def map_to_screen(self):
         player_screen_x = self.p1.x + self.p1.map_pos[0] + 32
         player_screen_y = self.p1.y + self.p1.map_pos[1] + 32
