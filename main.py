@@ -137,7 +137,7 @@ class Game:
                 if tile == 'H':
                     Medkit(self, col, row)
                 if tile == 'O':
-                    Box(self,col,row)
+                    Box(self, col, row)
         #makes the UI
 
     
